@@ -1,0 +1,54 @@
+# Application settings
+app:
+  title: "Image Processing Explorer"
+  description: "Interactive exploration of image processing techniques"
+  theme: "light"
+  layout: "wide"
+  page_icon: "assets/favicon.png"
+  logo: "assets/logo.png"
+
+# Asset paths
+paths:
+  sample_images: "assets/images"
+  latex: "assets/latex"
+
+# Algorithm parameters
+algorithms:
+  nlm:
+    search_window_size: 51
+    kernel_size: 7
+    filter_strength: 10.0
+    use_full_search: false
+  speckle:
+    kernel_size: 7
+
+# Processing settings
+processing:
+  max_pixels: 100000
+  show_per_pixel: true
+  start_position: "top-left"
+
+# UI settings
+ui:
+  max_image_size: 800
+  sidebar_width: "medium"
+  default_view: "upload"
+  display:
+    show_colorbar: false
+    show_stats: false
+  colormaps:
+    - "viridis_r"
+    - "gray"
+    - "plasma"
+    - "inferno"
+    - "magma"
+    - "pink"
+    - "hot"
+    - "cool"
+    - "YlOrRd"
+  style:
+    kernel_outline_color: "red"
+    kernel_center_pixel_color: "green"
+    search_window_color: "blue"
+    pixel_text_color: "white"
+    pixel_font_size: "8px"
