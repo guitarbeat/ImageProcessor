@@ -6,12 +6,9 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
-from typing import Optional, Tuple
-from matplotlib.backends.backend_agg import RendererAgg
 from contextlib import contextmanager
 
 from . import Component
-from utils.image_processing import preprocess_image
 from utils.constants import DEFAULT_DISPLAY_SIZE, DEFAULT_COLORMAP
 
 @dataclass
@@ -38,7 +35,6 @@ class ImageDisplay(Component):
         self.config = config
     
     @staticmethod
-    @st.cache_data(show_spinner=False)
     def _get_image_stats(_img_array: np.ndarray) -> dict:
         """Calculate and cache image statistics."""
         return {

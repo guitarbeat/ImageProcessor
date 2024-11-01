@@ -6,7 +6,6 @@ from typing import Tuple, Optional, List
 from processors.base import ImageProcessor
 import streamlit as st
 
-@st.cache_data(ttl=3600, show_spinner=False)
 def preprocess_image(_image: Image.Image) -> Tuple[Image.Image, np.ndarray]:
     """
     Cache preprocessed images. Uses underscore prefix to exclude image from hashing.
@@ -23,7 +22,6 @@ def preprocess_image(_image: Image.Image) -> Tuple[Image.Image, np.ndarray]:
     img_array = np.array(_image, dtype=np.float32) / 255.0
     return _image, img_array
 
-@st.cache_data(ttl=3600, show_spinner="Processing image...")
 def process_image_region(
     processor: ImageProcessor,
     image: np.ndarray,

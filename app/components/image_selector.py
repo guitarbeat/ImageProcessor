@@ -7,7 +7,6 @@ from typing import Callable
 import streamlit as st
 from streamlit_image_select import image_select
 from PIL import Image
-import hashlib
 
 from components import Component
 from utils import get_image_files
@@ -88,7 +87,6 @@ class ImageSelector(Component):
         return thumb
 
     @staticmethod
-    @st.cache_data(ttl=3600)
     def _create_thumbnail_cached(image_path: str, size: tuple[int, int]) -> Image.Image:
         """Create and cache thumbnails."""
         with Image.open(image_path) as img:

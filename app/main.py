@@ -40,7 +40,6 @@ class ImageProcessor:
     """Handles image processing logic."""
     
     @staticmethod
-    @st.cache_data(ttl=3600, show_spinner=False)
     def process_region(
         kernel_size: int,
         filter_type: str,
@@ -96,6 +95,19 @@ class ImageProcessor:
 class UIState:
     """Manages UI state and callbacks."""
     
+    DEFAULT_STATE = {
+        'filter_type': "lsci",
+        'selected_filters': ["LSCI"],
+        'kernel_size': 7,
+        'colormap': "gray",
+        'process_full_image': True,
+        'pixel_range': (0, 1000),
+        'selected_coordinates': None,
+        'processing_progress': 0,
+        'selected_region': None,
+        'initialized': True
+    }
+    
     def __init__(self, config: AppConfig):
         self.config = config
         self._initialize_session_state()
@@ -103,19 +115,16 @@ class UIState:
     def _initialize_session_state(self) -> None:
         """Initialize session state variables."""
         if not hasattr(st.session_state, 'initialized'):
-            st.session_state.filter_type = "lsci"
-            st.session_state.selected_filters = ["LSCI"]
-            st.session_state.kernel_size = 7
-            st.session_state.colormap = "gray"
-            st.session_state.show_colorbar = self.config.ui.show_colorbar
-            st.session_state.show_stats = self.config.ui.show_stats
-            st.session_state.process_full_image = True
-            st.session_state.pixel_range = (0, 1000)
-            st.session_state.selected_coordinates = None
-            st.session_state.processing_progress = 0
-            st.session_state.selected_region = None
-            st.session_state.initialized = True
-    
+            # Set defaults from config where applicable
+            defaults = {
+                **self.DEFAULT_STATE,
+                'show_colorbar': self.config.ui.show_colorbar,
+                'show_stats': self.config.ui.show_stats
+            }
+            
+            for key, value in defaults.items():
+                st.session_state.setdefault(key, value)
+
     @staticmethod
     def on_image_selected(image: Image.Image, name: str) -> None:
         st.session_state.image = image
@@ -146,6 +155,21 @@ class UIState:
 class DisplayMode:
     """Handle different display modes."""
     
+    @staticmethod
+    def _create_progress_bar(total_filters: int) -> Tuple[st.progress, str]:
+        """Create and return a progress bar with initial text."""
+        progress_text = "Processing filters..."
+        progress_bar = st.progress(0, text=progress_text)
+        return progress_bar, progress_text
+
+    @staticmethod
+    def _update_progress(progress_bar: st.progress, idx: int, total: int, filter_type: str) -> None:
+        """Update progress bar with current progress."""
+        progress_bar.progress(
+            (idx/total), 
+            text=f"Processing {filter_type}..."
+        )
+
     @staticmethod
     def render_side_by_side(input_display: ImageDisplay, 
                            processed_displays: Dict[str, ImageDisplay],
@@ -220,8 +244,7 @@ class ImageProcessingApp:
             layout=self.config.layout,
             initial_sidebar_state="collapsed"
         )
-
-        
+  
     def render_sidebar(self) -> None:
         """Render sidebar components."""
         with st.sidebar:
@@ -279,63 +302,67 @@ class ImageProcessingApp:
     def _render_display_section(self) -> None:
         """Render image display section."""
         if st.session_state.image is not None:
-            # Add display mode selection
             display_mode = st.radio(
                 "Display Mode",
                 ["Side by Side", "Interactive Comparison"],
                 horizontal=True
             )
             
-            if display_mode == "Side by Side":
-                self._process_and_display_image()
-            else:
-                self._process_and_compare_image()
-    
-    def _process_and_display_image(self) -> None:
-        """Process and display the image."""
-        input_display = ImageDisplay(ImageDisplayConfig(
+            input_image = self._get_input_image()
+            if input_image is not None:
+                processed_images = self._process_filters(input_image)
+                
+                if processed_images:
+                    if display_mode == "Side by Side":
+                        input_display, processed_displays = self._create_displays()
+                        self.display_mode.render_side_by_side(
+                            input_display,
+                            processed_displays,
+                            input_image,
+                            processed_images
+                        )
+                    else:
+                        self.display_mode.render_comparison(
+                            input_image,
+                            processed_images
+                        )
+
+    def _create_display_config(self, title: str) -> ImageDisplayConfig:
+        """Create consistent display configuration."""
+        return ImageDisplayConfig(
             colormap=st.session_state.colormap,
-            title="Input Image",
+            title=title,
             show_colorbar=st.session_state.show_colorbar,
             show_stats=st.session_state.show_stats
-        ))
+        )
+
+    def _create_displays(self) -> Tuple[ImageDisplay, Dict[str, ImageDisplay]]:
+        """Create input and processed image displays."""
+        input_display = ImageDisplay(self._create_display_config("Input Image"))
         
         processed_displays = {
-            filter_type: ImageDisplay(ImageDisplayConfig(
-                colormap=st.session_state.colormap,
-                title=f"{filter_type} Image",
-                show_colorbar=st.session_state.show_colorbar,
-                show_stats=st.session_state.show_stats
-            ))
+            filter_type: ImageDisplay(self._create_display_config(f"{filter_type} Image"))
             for filter_type in st.session_state.selected_filters
         }
         
-        input_image = self._get_input_image()
-        if input_image is not None:
-            processed_images = {}
-            total_filters = len(st.session_state.selected_filters)
-            
-            # Create progress bar for multiple filters
-            progress_text = "Processing filters..."
-            progress_bar = st.progress(0, text=progress_text)
-            
-            for idx, filter_type in enumerate(st.session_state.selected_filters):
-                progress_bar.progress((idx/total_filters), 
-                                    text=f"Processing {filter_type}...")
-                processed_result = self._process_image(input_image, filter_type)
-                if processed_result is not None:
-                    processed_images[filter_type] = processed_result
-            
-            progress_bar.progress(1.0, text="Processing complete!")
-            
-            if processed_images:  # Only display if we have processed images
-                self.display_mode.render_side_by_side(
-                    input_display,
-                    processed_displays,
-                    input_image,
-                    processed_images
-                )
-    
+        return input_display, processed_displays
+
+    def _process_filters(self, input_image: Image.Image) -> Dict[str, Image.Image]:
+        """Process all selected filters with progress tracking."""
+        processed_images = {}
+        total_filters = len(st.session_state.selected_filters)
+        
+        progress_bar, _ = DisplayMode._create_progress_bar(total_filters)
+        
+        for idx, filter_type in enumerate(st.session_state.selected_filters):
+            DisplayMode._update_progress(progress_bar, idx, total_filters, filter_type)
+            processed_result = self._process_image(input_image, filter_type)
+            if processed_result is not None:
+                processed_images[filter_type] = processed_result
+        
+        progress_bar.progress(1.0, text="Processing complete!")
+        return processed_images
+
     def _get_input_image(self) -> Optional[Image.Image]:
         """Get the input image for processing."""
         if not st.session_state.process_full_image and st.session_state.selected_region:
@@ -345,7 +372,8 @@ class ImageProcessingApp:
     
     def _process_image(self, input_image: Image.Image, filter_type: str) -> Optional[Image.Image]:
         """Process the input image with specified filter."""
-        input_array = np.array(input_image.convert('L'), dtype=np.float32) / 255.0
+        input_array = np.array(input_image.convert('L'), dtype=np.uint8) / 255.0
+        # input_array = np.array(input_image.convert('L'), dtype=np.float32) / 255.0
         region = None
         if not st.session_state.process_full_image and st.session_state.selected_region:
             region = st.session_state.selected_region
@@ -361,32 +389,6 @@ class ImageProcessingApp:
         if processed_array is not None:
             return Image.fromarray((processed_array * 255).astype(np.uint8))
         return None
-
-    def _process_and_compare_image(self) -> None:
-        """Process and compare images using interactive comparison."""
-        input_image = self._get_input_image()
-        if input_image is not None:
-            processed_images = {}
-            total_filters = len(st.session_state.selected_filters)
-            
-            # Create progress bar for multiple filters
-            progress_text = "Processing filters..."
-            progress_bar = st.progress(0, text=progress_text)
-            
-            for idx, filter_type in enumerate(st.session_state.selected_filters):
-                progress_bar.progress((idx/total_filters), 
-                                    text=f"Processing {filter_type}...")
-                processed_result = self._process_image(input_image, filter_type)
-                if processed_result is not None:
-                    processed_images[filter_type] = processed_result
-            
-            progress_bar.progress(1.0, text="Processing complete!")
-            
-            if processed_images:  # Only display if we have processed images
-                self.display_mode.render_comparison(
-                    input_image,
-                    processed_images
-                )
 
 def main():
     """Main application entry point."""
