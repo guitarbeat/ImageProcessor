@@ -4,25 +4,33 @@ An interactive application for exploring various image processing techniques.
 
 ## Setup
 
-1. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate # Linux/Mac
-venv\Scripts\activate # Windows
-```
+1. **Create a virtual environment:**
 
-2. Install dependencies:
-```bash
-python -m venv venv
-source venv/bin/activate # Linux/Mac
-venv\Scripts\activate # Windows
-```
+   For Linux/Mac:
 
-3. Run the application:
-```bash
-streamlit run run.py
-```
+   ```bash
+   python -m venv venv
+   source venv/bin/activate
+   ```
 
+   For Windows:
+
+   ```bash
+   python -m venv venv
+   venv\Scripts\activate
+   ```
+
+2. **Install dependencies:**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Run the application:**
+
+   ```bash
+   streamlit run app/main.py
+   ```
 
 ## Project Structure
 
@@ -36,7 +44,15 @@ streamlit run run.py
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes.
+4. Submit a pull request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+For any inquiries or issues, please contact [your-email@example.com].

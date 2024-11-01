@@ -2,12 +2,10 @@
 Reusable UI components for the application.
 """
 from abc import ABC, abstractmethod
-import streamlit as st
+from PIL import Image
 
 class Component(ABC):
     """Base class for UI components."""
-    
     @abstractmethod
-    def render(self) -> None:
+    def render(self, image: Image.Image) -> None:
         """Render the component in the Streamlit app."""
-        pass

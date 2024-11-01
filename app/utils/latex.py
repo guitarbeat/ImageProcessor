@@ -1,4 +1,6 @@
+"""LaTeX formula configurations for mathematical explanations."""
 from typing import Dict, Any
+
 
 SPECKLE_FORMULA_CONFIG: Dict[str, Any] = {
     "title": "Speckle Contrast Calculation",
@@ -52,4 +54,3 @@ The patch is constructed by considering pixels within the range $[-{half_kernel}
         },
     ],
 }
-
