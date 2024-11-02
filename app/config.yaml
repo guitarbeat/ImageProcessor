@@ -38,6 +38,7 @@ ui:
     show_stats: false
   colormaps:
     - "viridis_r"
+    - "viridis"
     - "gray"
     - "plasma"
     - "inferno"

@@ -8,8 +8,8 @@ import streamlit as st
 from streamlit_image_select import image_select
 from PIL import Image
 
-from components import Component
-from utils import get_image_files
+from app.components import Component
+from app.utils import get_image_files
 
 @dataclass
 class ImageSelectorConfig:

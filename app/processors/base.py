@@ -38,7 +38,8 @@ class ImageProcessor(ABC):
     def process(self, image: np.ndarray,
                 region: Optional[Tuple[int, int, int, int]] = None,
                 max_pixel: Optional[Tuple[int, int]] = None,
-                image_id: Optional[str] = None) -> Optional[np.ndarray]:
+                image_id: Optional[str] = None,
+                progress_callback: Optional[ProgressCallback] = None) -> Optional[np.ndarray]:
         """
         Process the image using a sliding window approach.
 
@@ -47,6 +48,7 @@ class ImageProcessor(ABC):
             region: Optional tuple of (x1, y1, x2, y2) defining the region to process (deprecated)
             max_pixel: Optional tuple of (x, y) defining maximum pixel to process
             image_id: Optional identifier for the image to handle caching
+            progress_callback: Optional progress callback function
         """
         try:
             # Initialize result array with zeros (black)
@@ -72,6 +74,11 @@ class ImageProcessor(ABC):
             # Process in chunks for better performance
             chunk_size = min(self.chunk_size, y_end - y_start)
 
+            def update_progress(progress: float) -> None:
+                if progress_callback:
+                    progress_callback(progress)
+                st.session_state.processing_progress = progress
+
             for chunk_start in range(y_start, y_end, chunk_size):
                 chunk_end = min(chunk_start + chunk_size, y_end)
 
@@ -86,10 +93,10 @@ class ImageProcessor(ABC):
                     # Update progress
                     if total_pixels > 0:
                         progress = processed_pixels / total_pixels
-                        st.session_state.processing_progress = progress
+                        update_progress(progress)
 
             # Ensure progress shows completion
-            st.session_state.processing_progress = 1.0
+            update_progress(1.0)
 
             return result
 

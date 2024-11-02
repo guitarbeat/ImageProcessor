@@ -1,22 +1,16 @@
 """Image processing utilities."""
-
-
 from typing import Tuple, Optional
 import numpy as np
 from PIL import Image
-from app.processors.base import ImageProcessor
+import streamlit as st
 
 
+
+@st.cache_data
 def preprocess_image(_image: Image.Image) -> Tuple[Image.Image, np.ndarray]:
     """
     Cache preprocessed images. Uses underscore prefix to exclude image from hashing.
     Since we're converting the image anyway, we don't need to hash the input.
-
-    Args:
-        _image: PIL Image to preprocess
-
-    Returns:
-        Tuple of (PIL Image, numpy array)
     """
     if _image.mode != 'L':
         _image = _image.convert('L')
@@ -25,16 +19,7 @@ def preprocess_image(_image: Image.Image) -> Tuple[Image.Image, np.ndarray]:
 
 
 def get_valid_kernel_bounds(image_size: tuple[int, int], kernel_size: int) -> tuple[tuple[int, int], tuple[int, int]]:
-    """
-    Calculate valid coordinate ranges for kernel processing.
-
-    Args:
-        image_size: Tuple of (width, height)
-        kernel_size: Size of the processing kernel
-
-    Returns:
-        ((x_min, x_max), (y_min, y_max)): Valid coordinate ranges
-    """
+    """Calculate valid coordinate ranges for kernel processing."""
     half_kernel = kernel_size // 2
     width, height = image_size
 
@@ -44,40 +29,51 @@ def get_valid_kernel_bounds(image_size: tuple[int, int], kernel_size: int) -> tu
     return x_bounds, y_bounds
 
 
+@st.cache_data
 def process_image_region(
-    processor: ImageProcessor,
     image: np.ndarray,
+    kernel_size: int,
+    filter_type: str,
     region: Optional[Tuple[int, int, int, int]] = None,
     max_pixel: Optional[Tuple[int, int]] = None,
-    region_key: Optional[str] = None,
-    containing_region: Optional[str] = None
 ) -> Optional[np.ndarray]:
-    """Process image region with proper error handling."""
+    """Cached image region processing."""
     try:
-        # Initialize result array with zeros (black)
+        # Initialize result array with zeros
         result = np.zeros_like(image)
-
+        
         # Get kernel boundaries
-        half_kernel = processor.kernel_size // 2
-
+        half_kernel = kernel_size // 2
+        
         # Calculate processing bounds
         if max_pixel is not None:
             max_x, max_y = max_pixel
             x_start, y_start = half_kernel, half_kernel
-            x_end, y_end = min(max_x + 1, image.shape[1] - half_kernel)
+            x_end = min(max_x + 1, image.shape[1] - half_kernel)
             y_end = min(max_y + 1, image.shape[0] - half_kernel)
         else:
             x_start, y_start = half_kernel, half_kernel
-            y_end, x_end = image.shape[0] - \
-                half_kernel, image.shape[1] - half_kernel
-
-        # Process region up to max_pixel
-        for y in range(y_start, y_end):
-            for x in range(x_start, x_end):
-                window = processor.extract_window(y, x, image)
-                result[y, x] = processor._compute_filter(window)
-
+            y_end, x_end = image.shape[0] - half_kernel, image.shape[1] - half_kernel
+            
+        # Process region
+        window_view = np.lib.stride_tricks.sliding_window_view(
+            image, (kernel_size, kernel_size)
+        )[y_start-half_kernel:y_end-half_kernel, x_start-half_kernel:x_end-half_kernel]
+        
+        if filter_type == "Mean":
+            result[y_start:y_end, x_start:x_end] = np.mean(window_view, axis=(2, 3))
+        elif filter_type == "Standard Deviation":
+            result[y_start:y_end, x_start:x_end] = np.std(window_view, axis=(2, 3))
+        else:  # LSCI
+            means = np.mean(window_view, axis=(2, 3))
+            stds = np.std(window_view, axis=(2, 3))
+            mask = means > 1e-10
+            result[y_start:y_end, x_start:x_end] = np.where(
+                mask, stds / means, 0.0
+            )
+            
         return result
 
     except Exception as e:
-        raise RuntimeError(f"Error processing image: {str(e)}")
+        st.error(f"Error processing image: {str(e)}")
+        return None

@@ -8,30 +8,30 @@ from PIL import Image
 from streamlit_image_comparison import image_comparison
 
 # Local application imports
-from utils.config import AppConfig
+from app.utils.config import AppConfig
 
 # Component imports
-from components.image_selector import (
+from app.components.image_selector import (
     ImageSelector,
     ImageSelectorConfig
 )
-from components.sidebar import (
+from app.components.sidebar import (
     Sidebar,
     SidebarConfig,
     DisplaySettings
 )
-from components.image_display import (
+from app.components.image_display import (
     ImageDisplay,
     ImageDisplayConfig
 )
-from components.processing_control import (
+from app.components.processing_control import (
     ProcessingControl,
     ProcessingControlConfig
 )
-from components.processing_params import ProcessingParams
+from app.components.processing_params import ProcessingParams
 
 # Processor imports
-from processors.lsci import LSCIProcessor
+from app.processors.spatial_filters import SpatialFilterProcessor
 
 # Load configuration
 config = AppConfig.load()
@@ -51,7 +51,7 @@ class ImageProcessor:
     ) -> Optional[np.ndarray]:
         """Process image region with caching."""
         try:
-            processor = LSCIProcessor(
+            processor = SpatialFilterProcessor(
                 kernel_size=kernel_size,
                 filter_type=filter_type,
                 chunk_size=1000
@@ -103,7 +103,7 @@ class UIState:
 
     DEFAULT_STATE = {
         'filter_type': "lsci",
-        'selected_filters': ["LSCI"],
+        'selected_filters': ["LSCI", "Mean", "Standard Deviation"],
         'kernel_size': 7,
         'colormap': "gray",
         'process_full_image': True,

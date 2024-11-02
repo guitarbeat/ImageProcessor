@@ -7,7 +7,7 @@ import streamlit as st
 import numpy as np
 from PIL import Image
 
-from . import Component
+from app.components import Component
 
 
 @dataclass

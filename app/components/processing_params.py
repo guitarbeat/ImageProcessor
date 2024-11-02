@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Optional, Literal
 import streamlit as st
 
-from . import Component
+from app.components import Component
 
 FilterType = Literal["mean", "std_dev", "lsci"]
 

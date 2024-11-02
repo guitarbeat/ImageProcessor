@@ -7,10 +7,10 @@ from typing import Callable, Optional
 import streamlit as st
 from PIL import Image
 
-from utils.constants import DEFAULT_COLORMAP
+from app.utils.constants import DEFAULT_COLORMAP
 
-from . import Component
-from .processing_params import (LSCIParams, ProcessingParams,
+from app.components import Component
+from app.components.processing_params import (LSCIParams, ProcessingParams,
                                 ProcessingParamsControl)
 
 
@@ -131,6 +131,10 @@ class Sidebar(Component):
             )
             self.config.on_display_settings_changed(settings)
 
+        def on_colormap_change():
+            """Handle colormap change."""
+            self.config.on_colormap_changed(st.session_state.colormap_select)
+
         # Create tabs for different settings groups
         basic_tab, visual_tab = st.tabs(["Basic Settings", "Visualization"])
 
@@ -140,7 +144,7 @@ class Sidebar(Component):
                 options=self.config.colormaps,
                 index=self.config.colormaps.index(st.session_state.colormap),
                 key='colormap_select',
-                on_change=self.config.on_colormap_changed,
+                on_change=on_colormap_change,
                 help="Choose a colormap for image display"
             )
 

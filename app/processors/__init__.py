@@ -2,6 +2,6 @@
 Image processing algorithms.
 """
 from .base import ImageProcessor
-from .lsci import LSCIProcessor
+from .spatial_filters import SpatialFilterProcessor
 
-__all__ = ['ImageProcessor', 'LSCIProcessor'] 
+__all__ = ['ImageProcessor', 'SpatialFilterProcessor'] 

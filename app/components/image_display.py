@@ -3,16 +3,16 @@ Component for image display with matplotlib integration.
 """
 from dataclasses import dataclass
 from contextlib import contextmanager
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 import streamlit as st
 
-from components import Component
-from utils.constants import DEFAULT_DISPLAY_SIZE, DEFAULT_COLORMAP
-from utils.visualization import add_kernel_overlay, highlight_pixel
+from app.components import Component
+from app.utils.constants import DEFAULT_DISPLAY_SIZE, DEFAULT_COLORMAP
+from app.utils.visualization import add_kernel_overlay, highlight_pixel
 
 
 @dataclass
@@ -33,6 +33,31 @@ def figure_context(*args, **kwargs):
         yield fig
     finally:
         plt.close(fig)
+
+
+@st.cache_data
+def get_kernel_view(
+    img_array: np.ndarray,
+    selected_pixel: Tuple[int, int],
+    kernel_size: int
+) -> Optional[np.ndarray]:
+    """Get cached kernel view around selected pixel."""
+    try:
+        x, y = selected_pixel
+        half_kernel = kernel_size // 2
+        
+        if (0 <= x - half_kernel and
+            0 <= y - half_kernel and
+            x + half_kernel < img_array.shape[1] and
+            y + half_kernel < img_array.shape[0]):
+            
+            return img_array[
+                y - half_kernel: y + half_kernel + 1,
+                x - half_kernel: x + half_kernel + 1
+            ]
+        return None
+    except Exception:
+        return None
 
 
 class ImageDisplay(Component):

@@ -8,8 +8,8 @@ from streamlit_image_coordinates import streamlit_image_coordinates
 from PIL import Image, ImageDraw
 import numpy as np
 
-from . import Component
-from .sidebar import DisplaySettings
+from app.components import Component
+from app.components.sidebar import DisplaySettings
 
 
 @dataclass
@@ -304,8 +304,8 @@ class ProcessingControl(Component):
                     )
                 
                 with tab2:
-                    from .math_explainer import MathExplainer, MathExplainerConfig
-                    from utils.latex import SPECKLE_FORMULA_CONFIG
+                    from app.components.math_explainer import MathExplainer, MathExplainerConfig
+                    from app.utils.latex import SPECKLE_FORMULA_CONFIG
                     
                     # Convert image to array if needed
                     if isinstance(image, Image.Image):
