@@ -381,26 +381,32 @@ class ImageProcessingApp:
 
     def _process_image(self, input_image: Image.Image, filter_type: str) -> Optional[Image.Image]:
         """Process the input image with specified filter."""
-        input_array = np.array(input_image.convert('L'),
-                               dtype=np.uint8) / 255.0
+        try:
+            input_array = np.array(input_image.convert('L'), dtype=np.float32) / 255.0
 
-        # Get max pixel if not processing full image
-        max_pixel = None
-        if not st.session_state.process_full_image:
-            if st.session_state.get('selected_pixel'):
-                max_pixel = st.session_state.selected_pixel
+            # Get max pixel if not processing full image
+            max_pixel = None
+            if not st.session_state.process_full_image:
+                if st.session_state.get('selected_pixel'):
+                    max_pixel = st.session_state.selected_pixel
 
-        processed_array = ImageProcessor.process_with_handling(
-            input_array=input_array,
-            kernel_size=st.session_state.kernel_size,
-            filter_type=filter_type.lower(),
-            max_pixel=max_pixel,  # Pass the max pixel
-            image_id=st.session_state.get('current_image_id', '')
-        )
+            processed_array = ImageProcessor.process_with_handling(
+                input_array=input_array,
+                kernel_size=st.session_state.kernel_size,
+                filter_type=filter_type.lower(),
+                max_pixel=max_pixel,
+                image_id=st.session_state.get('current_image_id', '')
+            )
 
-        if processed_array is not None:
-            return Image.fromarray((processed_array * 255).astype(np.uint8))
-        return None
+            if processed_array is not None:
+                # Apply colormap before converting to PIL Image
+                from app.utils.image_processing import apply_colormap
+                return apply_colormap(processed_array, st.session_state.colormap)
+                
+            return None
+        except Exception as e:
+            st.error(f"Error in _process_image: {str(e)}")
+            return None
 
 
 def main():

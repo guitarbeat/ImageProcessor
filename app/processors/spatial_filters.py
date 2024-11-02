@@ -28,11 +28,11 @@ class SpatialFilterProcessor(ImageProcessor):
                 return 0.0
                 
             mean = float(np.mean(window))
-            if self.filter_type == "Mean":
+            if self.filter_type.upper() == "MEAN":
                 return mean
             
             std = float(np.std(window))
-            if self.filter_type == "Standard Deviation":
+            if self.filter_type.upper() == "STANDARD DEVIATION":
                 return std
                 
             # LSCI computation
@@ -47,33 +47,25 @@ class SpatialFilterProcessor(ImageProcessor):
     def process(self, image: np.ndarray,
                 region: Optional[Tuple[int, int, int, int]] = None,
                 max_pixel: Optional[Tuple[int, int]] = None,
-                image_id: Optional[str] = None,
-                progress_callback: Optional[Callable[[float], None]] = None) -> Optional[np.ndarray]:
-        """
-        Process image using cached region processing.
-        
-        Args:
-            image: Input image array
-            region: Optional region to process (x1, y1, x2, y2)
-            max_pixel: Optional maximum pixel coordinates to process
-            image_id: Optional identifier for caching
-            progress_callback: Optional progress callback function
-        """
+                progress_callback: Optional[Callable[[float], None]] = None,
+                **kwargs) -> Optional[np.ndarray]:
+        """Process image using cached region processing."""
         try:
-            # Create cache key that includes filter type and kernel size
-            cache_key = f"{image_id}_{self.filter_type}_{self.kernel_size}" if image_id else None
-            
-            # Use cached processing
+            # Use cached processing with correct parameter order
             result = process_image_region(
                 image=image,
                 kernel_size=self.kernel_size,
-                filter_type=self.filter_type,
+                filter_type=self.filter_type,  # No need to convert here, done in process_image_region
                 region=region,
                 max_pixel=max_pixel
             )
             
+            # Handle progress callback if provided
             if progress_callback:
                 progress_callback(1.0)
+            
+            if result is None:
+                raise ValueError("Processing returned None")
                 
             return result
             

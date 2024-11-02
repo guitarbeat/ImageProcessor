@@ -29,7 +29,7 @@ def get_valid_kernel_bounds(image_size: tuple[int, int], kernel_size: int) -> tu
     return x_bounds, y_bounds
 
 
-@st.cache_data
+@st.cache_data(show_spinner=False)
 def process_image_region(
     image: np.ndarray,
     kernel_size: int,
@@ -37,7 +37,15 @@ def process_image_region(
     region: Optional[Tuple[int, int, int, int]] = None,
     max_pixel: Optional[Tuple[int, int]] = None,
 ) -> Optional[np.ndarray]:
-    """Cached image region processing."""
+    """
+    Cached image region processing.
+    
+    The cache key is based on:
+    - Image content
+    - Kernel size
+    - Filter type (LSCI, Mean, Standard Deviation)
+    - Processing region or max pixel
+    """
     try:
         # Initialize result array with zeros
         result = np.zeros_like(image)
@@ -55,25 +63,62 @@ def process_image_region(
             x_start, y_start = half_kernel, half_kernel
             y_end, x_end = image.shape[0] - half_kernel, image.shape[1] - half_kernel
             
-        # Process region
+        # Process region using sliding window
         window_view = np.lib.stride_tricks.sliding_window_view(
             image, (kernel_size, kernel_size)
         )[y_start-half_kernel:y_end-half_kernel, x_start-half_kernel:x_end-half_kernel]
         
-        if filter_type == "Mean":
+        # Normalize filter type for comparison
+        filter_type = filter_type.upper()
+        
+        # Apply specific filter computation based on type
+        if filter_type == "MEAN":
+            # Simple mean filter
             result[y_start:y_end, x_start:x_end] = np.mean(window_view, axis=(2, 3))
-        elif filter_type == "Standard Deviation":
+            
+        elif filter_type == "STANDARD DEVIATION":
+            # Standard deviation filter
             result[y_start:y_end, x_start:x_end] = np.std(window_view, axis=(2, 3))
-        else:  # LSCI
+            
+        elif filter_type == "LSCI":  # Explicit LSCI check
             means = np.mean(window_view, axis=(2, 3))
             stds = np.std(window_view, axis=(2, 3))
+            # Avoid division by zero and handle edge cases
             mask = means > 1e-10
             result[y_start:y_end, x_start:x_end] = np.where(
                 mask, stds / means, 0.0
             )
+        else:
+            raise ValueError(f"Unknown filter type: {filter_type}")
             
         return result
 
     except Exception as e:
         st.error(f"Error processing image: {str(e)}")
         return None
+
+@st.cache_data
+def apply_colormap(image: np.ndarray, colormap: str = 'gray') -> Image.Image:
+    """Apply colormap to image and convert to PIL Image."""
+    import matplotlib.pyplot as plt
+    import matplotlib as mpl
+    
+    # Create figure without display
+    fig = plt.figure(frameon=False)
+    ax = fig.add_axes([0, 0, 1, 1])
+    ax.axis('off')
+    
+    # Apply colormap
+    cm = mpl.colormaps[colormap]
+    colored_image = cm(image)
+    
+    # Convert to uint8
+    colored_image = (colored_image * 255).astype(np.uint8)
+    
+    # Convert to PIL
+    result = Image.fromarray(colored_image)
+    
+    # Cleanup
+    plt.close(fig)
+    
+    return result

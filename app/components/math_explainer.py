@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import Dict, Any, Optional
 import streamlit as st
 import numpy as np
-from PIL import Image
 
 from app.components import Component
 
