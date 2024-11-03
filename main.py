@@ -1,5 +1,5 @@
 # Standard library imports
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional, Tuple, Callable
 
 # Third-party imports
 import numpy as np
@@ -9,29 +9,39 @@ from streamlit_image_comparison import image_comparison
 
 # Local application imports
 from app.utils.config import AppConfig
+from app.utils.image_processing import preprocess_image, apply_colormap
+from app.utils.visualization import (
+    VisualizationConfig,
+    create_visualization_config,
+    add_statistics
+)
 
 # Component imports
-from app.components.image_selector import (
+from app.ui.components.image_selector import (
     ImageSelector,
     ImageSelectorConfig
 )
-from app.components.sidebar import (
+from app.ui.components.sidebar import (
     Sidebar,
     SidebarConfig,
     DisplaySettings
 )
-from app.components.image_display import (
+from app.ui.components.image_display import (
     ImageDisplay,
     ImageDisplayConfig
 )
-from app.components.processing_control import (
+from app.ui.components.processing_control import (
     ProcessingControl,
     ProcessingControlConfig
 )
-from app.components.processing_params import ProcessingParams
+from app.ui.components.processing_params import (
+    ProcessingParams,
+    CommonParams,
+    NLMParams
+)
 
 # Processor imports
-from app.processors.spatial_filters import SpatialFilterProcessor
+from app.processors.filters import SpatialFilterProcessor
 
 # Load configuration
 config = AppConfig.load()
@@ -41,27 +51,26 @@ class ImageProcessor:
     """Handles image processing logic."""
 
     @staticmethod
-    def process_region(
+    def process_image(
+        image: np.ndarray,
         kernel_size: int,
         filter_type: str,
-        image: np.ndarray,
-        region: Optional[Tuple[int, int, int, int]] = None,
-        max_pixel: Optional[Tuple[int, int]] = None,
-        image_id: Optional[str] = None
+        filter_strength: float = 10.0,
+        search_window_size: Optional[int] = None,
+        progress_callback: Optional[Callable[[float], None]] = None
     ) -> Optional[np.ndarray]:
-        """Process image region with caching."""
+        """Process image with specified filter."""
         try:
             processor = SpatialFilterProcessor(
                 kernel_size=kernel_size,
                 filter_type=filter_type,
-                chunk_size=1000
+                filter_strength=filter_strength,
+                search_window_size=search_window_size
             )
 
             result = processor.process(
                 image=image,
-                region=region,
-                max_pixel=max_pixel,
-                image_id=image_id
+                progress_callback=progress_callback
             )
 
             if result is None or result.size == 0:
@@ -71,30 +80,7 @@ class ImageProcessor:
             return result
 
         except Exception as e:
-            st.error(f"Error in process_region: {str(e)}")
-            return None
-
-    @staticmethod
-    def process_with_handling(
-        input_array: np.ndarray,
-        kernel_size: int,
-        filter_type: str,
-        region: Optional[Tuple[int, int, int, int]] = None,
-        max_pixel: Optional[Tuple[int, int]] = None,
-        image_id: Optional[str] = None
-    ) -> Optional[np.ndarray]:
-        """Process image with error handling."""
-        try:
-            return ImageProcessor.process_region(
-                kernel_size=kernel_size,
-                filter_type=filter_type,
-                image=input_array,
-                region=region,
-                max_pixel=max_pixel,
-                image_id=image_id
-            )
-        except Exception as e:
-            st.error(f"Error during image processing: {str(e)}")
+            st.error(f"Error in process_image: {str(e)}")
             return None
 
 
@@ -103,14 +89,19 @@ class UIState:
 
     DEFAULT_STATE = {
         'filter_type': "lsci",
-        'selected_filters': ["LSCI", "Mean", "Standard Deviation"],
         'kernel_size': 7,
         'colormap': "gray",
         'process_full_image': True,
         'pixel_range': (0, 1000),
         'selected_coordinates': None,
         'selected_region': None,
-        'initialized': True
+        'filter_strength': 10.0,
+        'use_full_image': True,
+        'search_size': 21,
+        'show_colorbar': True,
+        'show_stats': True,
+        'initialized': True,
+        'selected_filters': []
     }
 
     def __init__(self, config: AppConfig):
@@ -121,26 +112,34 @@ class UIState:
         """Initialize session state variables."""
         if not hasattr(st.session_state, 'initialized'):
             # Set defaults from config where applicable
-            defaults = {
-                **self.DEFAULT_STATE,
-                'show_colorbar': self.config.ui.show_colorbar,
-                'show_stats': self.config.ui.show_stats
-            }
+            defaults = {**self.DEFAULT_STATE}
+            
+            # Override with config values if they exist
+            if 'show_colorbar' in self.config.ui:
+                defaults['show_colorbar'] = self.config.ui['show_colorbar']
+            if 'show_stats' in self.config.ui:
+                defaults['show_stats'] = self.config.ui['show_stats']
 
             for key, value in defaults.items():
                 st.session_state.setdefault(key, value)
 
     @staticmethod
     def on_image_selected(image: Image.Image, name: str) -> None:
-        st.session_state.image = image
+        """Handle image selection."""
+        # Preprocess and store image
+        processed_image, img_array = preprocess_image(image)
+        st.session_state.image = processed_image
+        st.session_state.image_array = img_array
         st.session_state.image_name = name
 
     @staticmethod
     def on_colormap_changed(colormap: str) -> None:
+        """Handle colormap changes."""
         st.session_state.colormap = colormap
 
     @staticmethod
     def on_display_settings_changed(settings: DisplaySettings) -> None:
+        """Handle display settings changes."""
         if settings.show_colorbar != st.session_state.show_colorbar:
             st.session_state.show_colorbar = settings.show_colorbar
         if settings.show_stats != st.session_state.show_stats:
@@ -154,32 +153,38 @@ class UIState:
 
     @staticmethod
     def on_params_changed(params: ProcessingParams) -> None:
-        st.session_state.kernel_size = params.lsci.kernel_size
+        """Handle parameter changes."""
+        # Update common parameters
+        st.session_state.kernel_size = params.common.kernel_size
+        st.session_state.filter_type = params.filter_type
+
+        # Update NLM parameters if applicable
+        if params.filter_type == "nlm":
+            st.session_state.filter_strength = params.nlm.filter_strength
+            st.session_state.search_window_size = params.nlm.search_window_size
+            st.session_state.use_full_image = params.nlm.search_window_size is None
 
 
 class DisplayMode:
     """Handle different display modes."""
 
     @staticmethod
-    def _create_progress_bar(total_filters: int) -> Tuple[st.progress, str]:
-        """Create and return a progress bar with initial text."""
-        progress_text = "Processing filters..."
-        progress_bar = st.progress(0, text=progress_text)
-        return progress_bar, progress_text
-
-    @staticmethod
-    def _update_progress(progress_bar: st.progress, idx: int, total: int, filter_type: str) -> None:
-        """Update progress bar with current progress."""
-        progress_bar.progress(
-            (idx/total),
-            text=f"Processing {filter_type}..."
-        )
+    def create_progress_container(filter_type: str) -> tuple[st.empty, st.empty]:
+        """Create a container for progress bar and status text."""
+        container = st.empty()
+        with container:
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                progress_bar = st.progress(0, text=f"Processing {filter_type}...")
+            with col2:
+                status = st.empty()
+        return progress_bar, status, container
 
     @staticmethod
     def render_side_by_side(input_display: ImageDisplay,
-                            processed_displays: Dict[str, ImageDisplay],
-                            input_image: Image.Image,
-                            processed_images: Dict[str, Image.Image]):
+                           processed_displays: Dict[str, ImageDisplay],
+                           input_image: Image.Image,
+                           processed_images: Dict[str, Image.Image]) -> None:
         """Render all images side by side."""
         num_images = len(processed_images) + 1  # +1 for input image
         cols = st.columns(num_images)
@@ -197,7 +202,7 @@ class DisplayMode:
 
     @staticmethod
     def render_comparison(input_image: Image.Image,
-                          processed_images: Dict[str, Image.Image]):
+                         processed_images: Dict[str, Image.Image]) -> None:
         """Render interactive comparison between selected images."""
         if len(processed_images) > 1:
             # Allow user to select which images to compare
@@ -258,9 +263,12 @@ class ImageProcessingApp:
         # Get current image from session state
         image = st.session_state.get('image')
 
+        # Get colormaps from config or use defaults
+        colormaps = self.config.ui.get('colormaps', ['gray', 'viridis', 'plasma', 'inferno'])
+
         sidebar = Sidebar(SidebarConfig(
             title=self.config.title,
-            colormaps=self.config.ui.colormaps,
+            colormaps=colormaps,  # Use the colormaps from config or defaults
             on_colormap_changed=self.ui_state.on_colormap_changed,
             on_display_settings_changed=self.ui_state.on_display_settings_changed,
             on_params_changed=self.ui_state.on_params_changed,
@@ -287,46 +295,90 @@ class ImageProcessingApp:
             image_selector.render()
 
     def _render_processing_section(self) -> None:
-        """Render processing control section."""
-        with st.expander("Processing Control", expanded=True):
-            if st.session_state.image is not None:
-                processing_control = ProcessingControl(ProcessingControlConfig(
-                    on_settings_changed=self.ui_state.on_processing_settings_changed,
-                    initial_settings={
-                        "process_full_image": st.session_state.process_full_image,
-                        "selected_region": st.session_state.selected_region
-                    },
-                    display_settings=DisplaySettings(
-                        show_colorbar=st.session_state.show_colorbar,
-                        show_stats=st.session_state.show_stats
-                    )
-                ))
-                processing_control.render(st.session_state.image)
-            else:
-                st.info("Load an image to access processing controls", icon="ℹ️")
+        """Render image processing section."""
+        if 'image' not in st.session_state:
+            return
+
+        # Create processing control
+        processing_control = ProcessingControl(ProcessingControlConfig(
+            on_settings_changed=self.ui_state.on_processing_settings_changed,
+            initial_settings=self.ui_state.DEFAULT_STATE,
+            display_settings=DisplaySettings.from_session_state()
+        ))
+
+        # Check if processing is needed
+        needs_processing = (
+            'processed_image' not in st.session_state or
+            st.session_state.get('needs_processing', True)  # Default to True
+        )
+
+        if needs_processing:
+            # Process image with current settings
+            self._process_current_image()
+            # Clear the processing flag
+            st.session_state.needs_processing = False
+
+        # Render processing control
+        processing_control.render(st.session_state.image)
+
+    def _process_current_image(self) -> None:
+        """Process the current image with current settings."""
+        if 'image_array' not in st.session_state:
+            return
+
+        try:
+            # Get current settings
+            filter_type = st.session_state.get('filter_type', 'lsci')
+            kernel_size = st.session_state.get('kernel_size', 7)
+            filter_strength = st.session_state.get('filter_strength', 10.0)
+            search_window_size = None if st.session_state.get('use_full_image', True) else st.session_state.get('search_size', 21)
+
+            # Process image
+            result = ImageProcessor.process_image(
+                image=st.session_state.image_array,
+                kernel_size=kernel_size,
+                filter_type=filter_type,
+                filter_strength=filter_strength,
+                search_window_size=search_window_size
+            )
+
+            if result is not None:
+                st.session_state.processed_image = result
+                
+        except Exception as e:
+            st.error(f"Error processing image: {str(e)}")
 
     def _render_display_section(self) -> None:
         """Render image display section."""
-        if st.session_state.image is not None:
+        if st.session_state.get('image') is not None:
             display_mode = st.radio(
                 "Display Mode",
                 ["Side by Side", "Interactive Comparison"],
                 horizontal=True
             )
 
-            input_image = self._get_input_image()
+            input_image = st.session_state.image
             if input_image is not None:
                 processed_images = self._process_filters(input_image)
 
                 if processed_images:
                     if display_mode == "Side by Side":
                         input_display, processed_displays = self._create_displays()
-                        self.display_mode.render_side_by_side(
-                            input_display,
-                            processed_displays,
-                            input_image,
-                            processed_images
-                        )
+                        
+                        # Create columns for each image
+                        num_images = len(processed_images) + 1  # +1 for input image
+                        cols = st.columns(num_images)
+
+                        # Display input image
+                        with cols[0]:
+                            st.markdown("#### Input Image")
+                            input_display.render(input_image)
+
+                        # Display processed images
+                        for i, (filter_name, image) in enumerate(processed_images.items(), 1):
+                            with cols[i]:
+                                st.markdown(f"#### {filter_name}")
+                                processed_displays[filter_name].render(image)
                     else:
                         self.display_mode.render_comparison(
                             input_image,
@@ -337,7 +389,7 @@ class ImageProcessingApp:
         """Create consistent display configuration."""
         return ImageDisplayConfig(
             colormap=st.session_state.colormap,
-            title=title,
+            title=title,  # Restore title
             show_colorbar=st.session_state.show_colorbar,
             show_stats=st.session_state.show_stats
         )
@@ -347,6 +399,7 @@ class ImageProcessingApp:
         input_display = ImageDisplay(
             self._create_display_config("Input Image"))
 
+        # Create displays for each selected filter
         processed_displays = {
             filter_type: ImageDisplay(
                 self._create_display_config(f"{filter_type} Image"))
@@ -356,57 +409,60 @@ class ImageProcessingApp:
         return input_display, processed_displays
 
     def _process_filters(self, input_image: Image.Image) -> Dict[str, Image.Image]:
-        """Process all selected filters with progress tracking."""
+        """Process image with selected filters."""
         processed_images = {}
-        total_filters = len(st.session_state.selected_filters)
+        progress_containers = {}
+        
+        # Get selected filters from session state
+        selected_filters = st.session_state.get('selected_filters', [])
+        if not selected_filters:
+            st.warning("No filters selected. Please select at least one filter.")
+            return {}
+        
+        # Create progress bars for each filter
+        for filter_type in selected_filters:
+            progress_bar, status, container = DisplayMode.create_progress_container(filter_type)
+            progress_containers[filter_type] = (progress_bar, status, container)
 
-        progress_bar, _ = DisplayMode._create_progress_bar(total_filters)
+        # Get input array once
+        input_array = st.session_state.get('image_array')
+        if input_array is None:
+            st.error("No image array found in session state")
+            return {}
 
-        for idx, filter_type in enumerate(st.session_state.selected_filters):
-            DisplayMode._update_progress(
-                progress_bar, idx, total_filters, filter_type)
-            processed_result = self._process_image(input_image, filter_type)
-            if processed_result is not None:
-                processed_images[filter_type] = processed_result
-
-        progress_bar.progress(1.0, text="Processing complete!")
-        return processed_images
-
-    def _get_input_image(self) -> Optional[Image.Image]:
-        """Get the input image for processing."""
-        if not st.session_state.process_full_image and st.session_state.selected_region:
-            x1, y1, x2, y2 = st.session_state.selected_region
-            return st.session_state.image.crop((x1, y1, x2, y2))
-        return st.session_state.image
-
-    def _process_image(self, input_image: Image.Image, filter_type: str) -> Optional[Image.Image]:
-        """Process the input image with specified filter."""
-        try:
-            input_array = np.array(input_image.convert('L'), dtype=np.float32) / 255.0
-
-            # Get max pixel if not processing full image
-            max_pixel = None
-            if not st.session_state.process_full_image:
-                if st.session_state.get('selected_pixel'):
-                    max_pixel = st.session_state.selected_pixel
-
-            processed_array = ImageProcessor.process_with_handling(
-                input_array=input_array,
-                kernel_size=st.session_state.kernel_size,
-                filter_type=filter_type.lower(),
-                max_pixel=max_pixel,
-                image_id=st.session_state.get('current_image_id', '')
-            )
-
-            if processed_array is not None:
-                # Apply colormap before converting to PIL Image
-                from app.utils.image_processing import apply_colormap
-                return apply_colormap(processed_array, st.session_state.colormap)
+        # Process each filter
+        for filter_type in selected_filters:
+            progress_bar, status, container = progress_containers[filter_type]
+            
+            def progress_callback(progress: float, filter_name: str = filter_type):
+                progress_bar.progress(progress, text=f"Processing {filter_name}...")
+                if progress >= 1.0:
+                    status.success("✓")
+            
+            # Process image
+            try:
+                result = ImageProcessor.process_image(
+                    image=input_array,
+                    kernel_size=st.session_state.kernel_size,
+                    filter_type=filter_type.lower(),
+                    filter_strength=st.session_state.get('filter_strength', 10.0),
+                    search_window_size=st.session_state.get('search_window_size'),
+                    progress_callback=progress_callback
+                )
                 
-            return None
-        except Exception as e:
-            st.error(f"Error in _process_image: {str(e)}")
-            return None
+                if result is not None:
+                    # Apply colormap and store result
+                    processed_images[filter_type] = apply_colormap(
+                        result, st.session_state.colormap)
+                else:
+                    st.error(f"Failed to process {filter_type}")
+            except Exception as e:
+                st.error(f"Error processing {filter_type}: {str(e)}")
+            finally:
+                # Clear progress container
+                container.empty()
+
+        return processed_images
 
 
 def main():

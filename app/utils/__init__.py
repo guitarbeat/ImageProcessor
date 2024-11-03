@@ -1,25 +1,66 @@
-"""
-Utility functions for the application.
-"""
-from pathlib import Path
-from typing import List
+"""Utility modules for the application."""
+from .config import AppConfig
+from .constants import (
+    DEFAULT_KERNEL_SIZE,
+    DEFAULT_FILTER_TYPE,
+    ALLOWED_IMAGE_EXTENSIONS,
+    DISPLAY_MODES,
+    PROGRESS_BAR_STYLES
+)
+from .context_managers import figure_context, visualization_context
+from .file_utils import get_image_files
+from .latex import (
+    SPECKLE_FORMULA_CONFIG,
+    NLM_FORMULA_CONFIG,
+    create_kernel_matrix_latex,
+    get_search_window_bounds
+)
+from .visualization import (
+    VisualizationConfig,
+    KernelOverlayConfig,
+    SearchWindowOverlayConfig,
+    create_visualization_config,
+    create_kernel_overlay_config,
+    add_colorbar,
+    add_statistics,
+    add_kernel_overlay,
+    add_search_window_overlay,
+    highlight_pixel,
+    plot_similarity_map,
+    plot_weight_distribution
+)
 
-def get_image_files(directory: Path) -> List[Path]:
-    """Get all image files from a directory."""
-    # Make sure directory is a Path object
-    directory = Path(directory)
+__all__ = [
+    'AppConfig',
+    'get_image_files',
+    # Constants
+    'DEFAULT_KERNEL_SIZE',
+    'DEFAULT_FILTER_TYPE',
+    'ALLOWED_IMAGE_EXTENSIONS',
+    'DISPLAY_MODES',
+    'PROGRESS_BAR_STYLES',
     
-    # Check if directory exists
-    if not directory.exists():
-        raise FileNotFoundError(f"Directory not found: {directory}")
+    # Context managers
+    'figure_context',
+    'visualization_context',
     
-    # Get all image files with case-insensitive extensions
-    extensions = ['.png', '.jpg', '.jpeg', '.tif', '.tiff']
-    image_files = []
+    # LaTeX utilities
+    'SPECKLE_FORMULA_CONFIG',
+    'NLM_FORMULA_CONFIG',
+    'create_kernel_matrix_latex',
+    'get_search_window_bounds',
     
-    for ext in extensions:
-        # Add both lowercase and uppercase variants
-        image_files.extend(directory.glob(f"*{ext.lower()}"))
-        image_files.extend(directory.glob(f"*{ext.upper()}"))
-    
-    return sorted(image_files)  # Sort for consistent ordering
+    # Visualization utilities
+    'VisualizationConfig',
+    'KernelOverlayConfig',
+    'SearchWindowOverlayConfig',
+    'create_visualization_config',
+    'create_kernel_overlay_config',
+    'add_colorbar',
+    'add_statistics',
+    'add_kernel_overlay',
+    'add_search_window_overlay',
+    'highlight_pixel',
+    'plot_similarity_map',
+    'plot_weight_distribution'
+]

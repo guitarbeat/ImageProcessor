@@ -1,10 +1,10 @@
 """Image processing utilities."""
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Literal, Callable
 import numpy as np
 from PIL import Image
 import streamlit as st
 
-
+FilterType = Literal["lsci", "nlm", "mean", "std_dev", "standard deviation"]
 
 @st.cache_data
 def preprocess_image(_image: Image.Image) -> Tuple[Image.Image, np.ndarray]:
@@ -29,27 +29,18 @@ def get_valid_kernel_bounds(image_size: tuple[int, int], kernel_size: int) -> tu
     return x_bounds, y_bounds
 
 
-@st.cache_data(show_spinner=False)
 def process_image_region(
     image: np.ndarray,
     kernel_size: int,
-    filter_type: str,
+    filter_type: FilterType,
     region: Optional[Tuple[int, int, int, int]] = None,
     max_pixel: Optional[Tuple[int, int]] = None,
+    _progress_callback: Optional[Callable[[float], None]] = None
 ) -> Optional[np.ndarray]:
     """
-    Cached image region processing.
-    
-    The cache key is based on:
-    - Image content
-    - Kernel size
-    - Filter type (LSCI, Mean, Standard Deviation)
-    - Processing region or max pixel
+    Process image region with specified filter.
     """
     try:
-        # Initialize result array with zeros
-        result = np.zeros_like(image)
-        
         # Get kernel boundaries
         half_kernel = kernel_size // 2
         
@@ -59,37 +50,61 @@ def process_image_region(
             x_start, y_start = half_kernel, half_kernel
             x_end = min(max_x + 1, image.shape[1] - half_kernel)
             y_end = min(max_y + 1, image.shape[0] - half_kernel)
+        elif region is not None:
+            x1, y1, x2, y2 = region
+            x_start = max(half_kernel, x1)
+            y_start = max(half_kernel, y1)
+            x_end = min(x2 + 1, image.shape[1] - half_kernel)
+            y_end = min(y2 + 1, image.shape[0] - half_kernel)
         else:
             x_start, y_start = half_kernel, half_kernel
             y_end, x_end = image.shape[0] - half_kernel, image.shape[1] - half_kernel
-            
-        # Process region using sliding window
+
+        # Create result array with same shape as input
+        result = np.zeros_like(image)
+        
+        # Create window view for efficient computation
         window_view = np.lib.stride_tricks.sliding_window_view(
             image, (kernel_size, kernel_size)
-        )[y_start-half_kernel:y_end-half_kernel, x_start-half_kernel:x_end-half_kernel]
+        )
+        
+        # Get the valid portion of the window view
+        valid_view = window_view[
+            y_start-half_kernel:y_end-half_kernel,
+            x_start-half_kernel:x_end-half_kernel
+        ]
         
         # Normalize filter type for comparison
-        filter_type = filter_type.upper()
+        filter_type = filter_type.lower()
+        
+        total_pixels = (y_end - y_start) * (x_end - x_start)
         
         # Apply specific filter computation based on type
-        if filter_type == "MEAN":
-            # Simple mean filter
-            result[y_start:y_end, x_start:x_end] = np.mean(window_view, axis=(2, 3))
-            
-        elif filter_type == "STANDARD DEVIATION":
-            # Standard deviation filter
-            result[y_start:y_end, x_start:x_end] = np.std(window_view, axis=(2, 3))
-            
-        elif filter_type == "LSCI":  # Explicit LSCI check
-            means = np.mean(window_view, axis=(2, 3))
-            stds = np.std(window_view, axis=(2, 3))
-            # Avoid division by zero and handle edge cases
+        if filter_type == "lsci":
+            means = np.mean(valid_view, axis=(2, 3))
+            stds = np.std(valid_view, axis=(2, 3), ddof=1)
             mask = means > 1e-10
             result[y_start:y_end, x_start:x_end] = np.where(
                 mask, stds / means, 0.0
             )
+        elif filter_type in ["mean", "standard deviation", "std_dev"]:
+            if filter_type == "mean":
+                values = np.mean(valid_view, axis=(2, 3))
+            else:
+                values = np.std(valid_view, axis=(2, 3), ddof=1)
+            result[y_start:y_end, x_start:x_end] = values
+        elif filter_type == "nlm":
+            # NLM is handled by SpatialFilterProcessor directly
+            return None
         else:
             raise ValueError(f"Unknown filter type: {filter_type}")
+            
+        # Update progress if callback provided
+        if _progress_callback:
+            update_interval = max(1, total_pixels // 100)
+            for i in range(0, total_pixels, update_interval):
+                _progress_callback(min(1.0, i / total_pixels))
+            _progress_callback(1.0)
             
         return result
 
@@ -97,11 +112,16 @@ def process_image_region(
         st.error(f"Error processing image: {str(e)}")
         return None
 
+
 @st.cache_data
 def apply_colormap(image: np.ndarray, colormap: str = 'gray') -> Image.Image:
     """Apply colormap to image and convert to PIL Image."""
     import matplotlib.pyplot as plt
     import matplotlib as mpl
+    
+    # Normalize image to [0, 1] if needed
+    if image.dtype != np.float32 or image.min() < 0 or image.max() > 1:
+        image = (image - image.min()) / (image.max() - image.min() + 1e-10)
     
     # Create figure without display
     fig = plt.figure(frameon=False)

@@ -19,3 +19,11 @@ PROGRESS_UPDATE_INTERVAL = 0.1  # seconds
 MAX_PROCESSABLE_PIXELS = 1_000_000
 DEFAULT_DISPLAY_WIDTH = 700
 DEFAULT_COMPARISON_POSITION = 50
+
+# Add progress bar styling
+PROGRESS_BAR_STYLES = {
+    "LSCI": "rgb(255, 75, 75)",
+    "Mean": "rgb(75, 192, 192)",
+    "Standard Deviation": "rgb(255, 159, 64)",
+    "NLM": "rgb(54, 162, 235)"
+}
