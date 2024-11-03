@@ -40,11 +40,9 @@ class SearchWindowOverlayConfig:
     def from_session_state(cls) -> "SearchWindowOverlayConfig":
         """Create from session state."""
         return cls(
-            outline_color=st.session_state.get(
-                "search_window_color", "#0000FF"),
+            outline_color=st.session_state.get("search_window_color", "#0000FF"),
             outline_width=st.session_state.get("search_window_width", 2),
-            outline_style=st.session_state.get(
-                "search_window_style", "dashed"),
+            outline_style=st.session_state.get("search_window_style", "dashed"),
         )
 
 

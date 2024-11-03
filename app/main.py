@@ -1,11 +1,11 @@
 # Standard library imports
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Literal, Optional, Tuple
 
 # Third-party imports
 import numpy as np
 import streamlit as st
 from PIL import Image
-from streamlit_image_comparison import image_comparison
+from streamlit_image_comparison import image_comparison  # type: ignore
 
 # Processor imports
 from app.processors.filters import SpatialFilterProcessor
@@ -35,7 +35,7 @@ class ImageProcessor:
     def process_image(
         image: np.ndarray,
         kernel_size: int,
-        filter_type: str,
+        filter_type: Literal["lsci", "nlm", "mean", "std_dev"],
         filter_strength: float = 10.0,
         search_window_size: Optional[int] = None,
         progress_callback: Optional[Callable[[float], None]] = None,
@@ -147,7 +147,7 @@ class DisplayMode:
     """Handle different display modes."""
 
     @staticmethod
-    def create_progress_container(filter_type: str) -> tuple[st.empty, st.empty]:
+    def create_progress_container(filter_type: str) -> tuple[Any, Any, Any]:
         """Create a container for progress bar and status text."""
         container = st.empty()
         with container:
@@ -241,7 +241,9 @@ class ImageProcessingApp:
         st.set_page_config(
             page_title=self.config.title,
             page_icon=str(self.config.page_icon),
-            layout=self.config.layout,
+            layout=(
+                "wide" if self.config.layout == "wide" else "centered"
+            ),  # Must be 'centered' or 'wide'
             initial_sidebar_state="collapsed",
         )
 

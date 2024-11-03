@@ -4,10 +4,10 @@ from typing import Dict
 
 import numpy as np
 
-from .base import FilterAnalysis
+from .analyzer_base import BaseAnalyzer
 
 
-class LSCIAnalysis(FilterAnalysis):
+class LSCIAnalysis(BaseAnalyzer):
     """Handles LSCI-specific analysis and visualization."""
 
     def analyze_weights(self, data: np.ndarray) -> Dict[str, float]:

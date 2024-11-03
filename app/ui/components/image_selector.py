@@ -2,15 +2,15 @@
 Component for image selection (upload or preloaded).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
 import streamlit as st
 from PIL import Image
-from streamlit_image_select import image_select
+from streamlit_image_select import image_select  # type: ignore
 
-from app.ui.components.base import Component
+from app.ui.components.component_base import BaseUIComponent
 from app.utils import get_image_files
 
 
@@ -20,21 +20,19 @@ class ImageSelectorConfig:
 
     sample_images_path: Path
     on_image_selected: Callable[[Image.Image, str], None]
-    allowed_types: list[str] = None
-    # Size for image grid thumbnails
+    allowed_types: list[str] = field(
+        default_factory=lambda: ["png", "jpg", "jpeg", "tif", "tiff"]
+    )
     thumbnail_size: tuple[int, int] = (80, 80)
 
-    def __post_init__(self):
-        self.allowed_types = self.allowed_types or ["png", "jpg", "jpeg", "tif", "tiff"]
 
-
-class ImageSelector(Component):
+class ImageSelector(BaseUIComponent):
     """Component for selecting or uploading images."""
 
     def __init__(self, config: ImageSelectorConfig):
         self.config = config
 
-    def render(self) -> None:
+    def render(self, image: Image.Image | None = None) -> None:
         """Render the image selection interface."""
         sample_tab, upload_tab = st.tabs(["📸 Sample Images", "📤 Upload Image"])
 

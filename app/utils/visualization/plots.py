@@ -1,27 +1,32 @@
 """Plotting utilities for visualization."""
 
+from typing import Literal
+
 import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 
 from app.utils.visualization.config import VisualizationConfig
 
+# Define Orientation type
+Orientation = Literal["vertical", "horizontal"]
+
 
 def plot_weight_distribution(
     ax: plt.Axes,
     weights: np.ndarray,
     vis_config: VisualizationConfig,
-    orientation: str = "vertical",
+    orientation: Orientation = "vertical",  # Use Literal type
     show_percentiles: bool = True,
 ) -> None:
     """Plot weight distribution with consistent styling."""
     non_zero_weights = weights[weights > 0]
 
-    # Plot histogram
+    # Plot histogram with properly typed orientation
     ax.hist(
         non_zero_weights,
         bins=50,
-        orientation=orientation,
+        orientation=orientation,  # Now properly typed as Literal
         color=st.session_state.get("center_color", "#FF0000"),
         alpha=0.7,
         label=f"n={len(non_zero_weights)}",

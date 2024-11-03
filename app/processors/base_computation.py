@@ -28,8 +28,8 @@ class BaseComputation(ABC):
                 and self.half_kernel <= y < data.shape[0] - self.half_kernel
             ):
                 return data[
-                    y - self.half_kernel: y + self.half_kernel + 1,
-                    x - self.half_kernel: x + self.half_kernel + 1,
+                    y - self.half_kernel : y + self.half_kernel + 1,
+                    x - self.half_kernel : x + self.half_kernel + 1,
                 ]
         except Exception:
             return None

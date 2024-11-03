@@ -75,7 +75,7 @@ NLM_FORMULA_CONFIG: Dict[str, Any] = {
         "The Non-Local Means algorithm transforms input coordinates $(x,y)$ to output coordinates $(i,j)$:\n\n"
         "1. Input pixel: $I_{{{x},{y}}} = {original_value:.{decimals}f}$ at position $(x,y)$\n\n"
         "2. Output pixel: $NLM_{{{i},{j}}} = {nlm_value:.{decimals}f}$ at position $(i,j)$\n\n"
-        "3. Search window $\Omega_{{{x},{y}}}$ centered at input position\n\n"
+        r"3. Search window $\Omega_{{{x},{y}}}$ centered at input position\n\n"
         "4. Weights $w_{{{x},{y}}}(s,t)$ measure similarity between patches"
     ),
     "additional_formulas": [
@@ -124,7 +124,7 @@ NLM_FORMULA_CONFIG: Dict[str, Any] = {
                 "**Normalization Process:**\n"
                 "1. Sum all weights $w_{{{x},{y}}}(s,t)$ to get $C_{{{x},{y}}} = {norm_factor:.{decimals}f}$\n"
                 "2. Divide each weight by $C_{{{x},{y}}}$ to normalize\n"
-                "3. Ensures $\sum w_{{{x},{y}}}^{{\text{{norm}}}}(s,t) = 1$"
+                r"3. Ensures $\sum w_{{{x},{y}}}^{{\text{{norm}}}}(s,t) = 1$"
             ),
         },
         {

@@ -1,6 +1,6 @@
 """UI component implementations."""
 
-from .base import Component
+from .component_base import BaseUIComponent
 from .image_display import ImageDisplay, ImageDisplayConfig
 from .image_selector import ImageSelector, ImageSelectorConfig
 from .math_explainer import MathExplainer, MathExplainerConfig
@@ -9,7 +9,7 @@ from .processing_params import ProcessingParams, ProcessingParamsControl
 from .sidebar import Sidebar, SidebarConfig
 
 __all__ = [
-    "Component",
+    "BaseUIComponent",
     "ImageDisplay",
     "ImageDisplayConfig",
     "ImageSelector",

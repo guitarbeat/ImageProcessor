@@ -1,7 +1,7 @@
 """UI components and settings."""
 
 from .components import (
-    Component,
+    BaseUIComponent,
     ImageDisplay,
     ImageDisplayConfig,
     ImageSelector,
@@ -22,7 +22,7 @@ __all__ = [
     "DisplaySettings",
     "ProcessingSettings",
     # Components
-    "Component",
+    "BaseUIComponent",
     "ImageDisplay",
     "ImageDisplayConfig",
     "ImageSelector",

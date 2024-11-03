@@ -1,5 +1,6 @@
 """
-Base class for image processors.
+Base processor for image processing operations.
+app/processors/processor_base.py
 """
 
 from abc import ABC, abstractmethod
@@ -15,7 +16,7 @@ class ProgressCallback(Protocol):
     def __call__(self, progress: float) -> None: ...
 
 
-class ImageProcessor(ABC):
+class BaseImageProcessor(ABC):
     """Abstract base class for image processors."""
 
     def __init__(self, kernel_size: int = 7, chunk_size: int = 1000) -> None:

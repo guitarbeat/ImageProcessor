@@ -3,11 +3,11 @@ Components for processing parameter controls.
 """
 
 from dataclasses import dataclass, field
-from typing import Callable, Literal, Optional
+from typing import Any, Callable, Literal, Optional, cast
 
 import streamlit as st
 
-from app.ui.components.base import Component
+from app.ui.components.component_base import BaseUIComponent
 
 FilterType = Literal["lsci", "nlm"]
 
@@ -59,7 +59,7 @@ class ProcessingParams:
             self.nlm.validate(self.common.kernel_size)
 
 
-class ProcessingParamsControl(Component):
+class ProcessingParamsControl(BaseUIComponent):
     """Component for controlling processing parameters."""
 
     def __init__(
@@ -70,7 +70,7 @@ class ProcessingParamsControl(Component):
         self.params = params
         self.on_change = on_change
 
-    def render(self) -> None:
+    def render(self, image: Any = None) -> None:
         """Render processing parameters controls."""
         # Common Parameters
         kernel_size = st.slider(
@@ -95,7 +95,7 @@ class ProcessingParamsControl(Component):
         )
 
         self.params.common.kernel_size = kernel_size
-        self.params.filter_type = filter_type.lower()
+        self.params.filter_type = cast(FilterType, filter_type.lower())
 
         # NLM Parameters
         if filter_type == "NLM":

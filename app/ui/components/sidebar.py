@@ -6,7 +6,7 @@ from typing import Callable, Optional
 import streamlit as st
 from PIL import Image
 
-from app.ui.components.base import Component
+from app.ui.components.component_base import BaseUIComponent
 from app.ui.components.processing_params import (
     CommonParams,
     NLMParams,
@@ -29,15 +29,15 @@ class SidebarConfig:
     initial_colormap: str = DEFAULT_COLORMAP
 
 
-class Sidebar(Component):
-    """Sidebar component with settings and controls."""
+class Sidebar(BaseUIComponent):
+    """Component for sidebar controls."""
 
     def __init__(self, config: SidebarConfig):
         """Initialize sidebar with config."""
         self.config = config
         self.settings = DisplaySettings.from_session_state()
 
-    def render(self, image: Optional[Image.Image]) -> None:
+    def render(self, image: Optional[Image.Image] = None) -> None:
         """Render the sidebar interface."""
         with st.sidebar:
             st.title(self.config.title)
@@ -303,6 +303,6 @@ class Sidebar(Component):
             }
         )
 
-        # Call the provided callback
-        if self.config.on_params_changed:
+        # Call the provided callback if it exists
+        if callable(self.config.on_params_changed):
             self.config.on_params_changed(params)

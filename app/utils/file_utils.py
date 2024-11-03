@@ -11,9 +11,9 @@ def get_image_files(directory: Path) -> List[Path]:
     if not directory.exists():
         raise FileNotFoundError(f"Directory not found: {directory}")
 
-    image_files = []
+    image_files: List[Path] = []
     for ext in ALLOWED_IMAGE_EXTENSIONS:
-        image_files.extend(directory.glob(f"*{ext}"))
+        image_files.extend(list(directory.glob(f"*{ext}")))
 
     # Sort for consistent ordering
     image_files.sort()

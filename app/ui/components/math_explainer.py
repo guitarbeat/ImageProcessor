@@ -7,12 +7,18 @@ from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import streamlit as st
+from PIL import Image
 
 from app.processors.computations import LSCIComputation, NLMComputation
-from app.ui.components.base import Component
+from app.ui.components.component_base import BaseUIComponent
 from app.ui.settings import DisplaySettings
+from app.utils.context_managers import figure_context
 from app.utils.latex import create_kernel_matrix_latex, get_search_window_bounds
-from app.utils.visualization import create_kernel_overlay_config
+from app.utils.visualization import (
+    SearchWindowOverlayConfig,
+    create_kernel_overlay_config,
+    plot_similarity_map,
+)
 
 
 @dataclass
@@ -25,7 +31,7 @@ class MathExplainerConfig:
     image_array: Optional[np.ndarray] = None
 
 
-class MathExplainer(Component):
+class MathExplainer(BaseUIComponent):
     """Component for displaying mathematical explanations."""
 
     def __init__(self, config: MathExplainerConfig):
@@ -34,9 +40,9 @@ class MathExplainer(Component):
         self.vis_config = self.settings.to_visualization_config()
         self.kernel_config = create_kernel_overlay_config()
 
-    def render(self) -> None:
+    def render(self, image: Optional[Image.Image] = None) -> None:
         """Render mathematical explanations with integrated analysis."""
-        if not all([self.config.selected_pixel, self.config.image_array is not None]):
+        if not self.config.selected_pixel or self.config.image_array is None:
             st.info("Select a pixel to view mathematical explanation.")
             return
 
@@ -44,6 +50,11 @@ class MathExplainer(Component):
             # Get coordinates and validate
             x, y = self.config.selected_pixel
             half_kernel = self.config.kernel_size // 2
+
+            # Add null checks for image_array
+            if self.config.image_array is None:
+                st.error("No image data available")
+                return
 
             if not (
                 0 <= x < self.config.image_array.shape[1]
@@ -148,6 +159,11 @@ class MathExplainer(Component):
     ) -> None:
         """Render integrated analysis."""
         if isinstance(computation, NLMComputation):
+            # Add null check for image_array
+            if self.config.image_array is None:
+                st.error("No image data available for analysis")
+                return
+
             similarity_map = computation.compute_similarity_map(
                 self.config.image_array, subs["x"], subs["y"]
             )
@@ -274,6 +290,12 @@ class MathExplainer(Component):
         computation: Any,
     ) -> Dict[str, Any]:
         """Create substitution dictionary with consistent coordinate notation."""
+        if self.config.image_array is None:
+            raise ValueError("Image array is not available")
+
+        # Now we can safely use image_array since we've checked it's not None
+        image_array = self.config.image_array
+
         # Get input coordinates
         x, y = input_coords
         # Get output coordinates
@@ -285,8 +307,8 @@ class MathExplainer(Component):
             x=x,
             y=y,
             search_size=getattr(computation, "search_window_size", None),
-            image_width=self.config.image_array.shape[1],
-            image_height=self.config.image_array.shape[0],
+            image_width=image_array.shape[1],
+            image_height=image_array.shape[0],
         )
 
         # Format values with consistent coordinate notation
@@ -304,9 +326,9 @@ class MathExplainer(Component):
             "processed_x": i,  # Use output coordinates
             "processed_y": j,  # Use output coordinates
             "valid_x_min": half_kernel,
-            "valid_x_max": self.config.image_array.shape[1] - half_kernel,
+            "valid_x_max": image_array.shape[1] - half_kernel,
             "valid_y_min": half_kernel,
-            "valid_y_max": self.config.image_array.shape[0] - half_kernel,
+            "valid_y_max": image_array.shape[0] - half_kernel,
             "total_pixels": self.config.kernel_size * self.config.kernel_size,
         }
 
@@ -329,14 +351,10 @@ class MathExplainer(Component):
                 decimals=self.vis_config.decimals,
             ),
             # Image dimensions
-            "image_height": self.config.image_array.shape[0],
-            "image_width": self.config.image_array.shape[1],
-            "valid_height": self.config.image_array.shape[0]
-            - self.config.kernel_size
-            + 1,
-            "valid_width": self.config.image_array.shape[1]
-            - self.config.kernel_size
-            + 1,
+            "image_height": image_array.shape[0],
+            "image_width": image_array.shape[1],
+            "valid_height": image_array.shape[0] - self.config.kernel_size + 1,
+            "valid_width": image_array.shape[1] - self.config.kernel_size + 1,
             # Processed coordinates
             **processed_coords,
             # Additional values
@@ -346,6 +364,11 @@ class MathExplainer(Component):
     def _extract_kernel(self, x: int, y: int) -> Optional[np.ndarray]:
         """Extract kernel around selected pixel."""
         half = self.config.kernel_size // 2
+
+        # Add null check for image_array
+        if self.config.image_array is None:
+            return None
+
         try:
             if (
                 half <= x < self.config.image_array.shape[1] - half

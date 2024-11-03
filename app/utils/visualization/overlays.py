@@ -2,7 +2,7 @@
 Module for adding visual overlays to image processing visualizations.
 """
 
-from typing import Optional, Tuple
+from typing import Literal, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,6 +11,9 @@ from matplotlib.collections import LineCollection
 from matplotlib.patches import Rectangle
 
 from .config import KernelOverlayConfig, SearchWindowOverlayConfig, VisualizationConfig
+
+# Add orientation literal type
+Orientation = Literal["vertical", "horizontal"]
 
 
 def add_colorbar(
@@ -75,7 +78,10 @@ def plot_similarity_map(
             ax=ax,
             center=(x, y),
             kernel_size=kernel_config.kernel_size,
-            image_shape=similarity_map.shape,
+            image_shape=(
+                int(similarity_map.shape[1]),
+                int(similarity_map.shape[0]),
+            ),  # Cast to tuple[int, int]
             config=kernel_config,
         )
 
@@ -84,7 +90,10 @@ def plot_similarity_map(
             ax=ax,
             center=(x, y),
             search_window_size=similarity_map.shape[0],
-            image_shape=similarity_map.shape,
+            image_shape=(
+                int(similarity_map.shape[1]),
+                int(similarity_map.shape[0]),
+            ),  # Cast to tuple[int, int]
             config=search_config,
         )
 
@@ -97,17 +106,17 @@ def plot_weight_distribution(
     ax: plt.Axes,
     weights: np.ndarray,
     vis_config: VisualizationConfig,
-    orientation: str = "vertical",
+    orientation: Orientation = "vertical",  # Use Literal type
     show_percentiles: bool = True,
 ) -> None:
     """Plot weight distribution with consistent styling."""
     non_zero_weights = weights[weights > 0]
 
-    # Plot histogram
+    # Plot histogram with properly typed orientation
     ax.hist(
         non_zero_weights,
         bins=50,
-        orientation=orientation,
+        orientation=orientation,  # Now properly typed as Literal
         color=st.session_state.get("center_color", "#FF0000"),
         alpha=0.7,
         label=f"n={len(non_zero_weights)}",

@@ -1,7 +1,7 @@
 """NLM-specific analysis and visualization."""
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,6 +17,23 @@ from app.utils.visualization import (
     highlight_pixel,
     plot_similarity_map,
 )
+
+if TYPE_CHECKING:
+    from scipy.optimize import curve_fit  # type: ignore
+
+
+def exp_decay(x: np.ndarray, a: float, b: float) -> np.ndarray:
+    """Exponential decay function for curve fitting.
+
+    Args:
+        x: Input values
+        a: Amplitude
+        b: Decay rate
+
+    Returns:
+        Exponentially decaying values
+    """
+    return a * np.exp(-b * x)
 
 
 @dataclass
@@ -94,11 +111,6 @@ class NLMAnalysis:
 
         # Fit exponential decay
         try:
-            from scipy.optimize import curve_fit
-
-            def exp_decay(x, a, b):
-                return a * np.exp(-b * x)
-
             popt, _ = curve_fit(exp_decay, unique_distances, avg_weights)
             return float(popt[1])  # Return decay rate
         except ImportError:
@@ -109,22 +121,38 @@ class NLMAnalysis:
 
     def render_analysis(self, nlm_state: NLMState) -> None:
         """Integrated analysis rendering."""
+        # Extract required data from nlm_state
+        similarity_map = nlm_state.similarity_map
+        img_array = nlm_state.image
+        x, y = nlm_state.current_position
+        search_range = nlm_state.search_range
+
+        # Calculate statistics
+        weight_stats = self.analyze_weights(similarity_map)
+        spatial_stats = self.analyze_spatial_patterns(similarity_map)
+
         # Create consistent tabs
         analysis_tabs = st.tabs(
             ["🎯 Search Region", "📊 Weights", "🌐 Spatial", "💡 Interpretation"]
         )
 
         with analysis_tabs[0]:
-            self._render_search_region(nlm_state)
+            self._render_search_region(
+                img_array=img_array,
+                similarity_map=similarity_map,
+                x=x,
+                y=y,
+                search_range=search_range,
+            )
 
         with analysis_tabs[1]:
-            self._render_weight_analysis(nlm_state)
+            self._render_weight_distribution(similarity_map, weight_stats)
 
         with analysis_tabs[2]:
-            self._render_spatial_analysis(nlm_state)
+            self._render_spatial_analysis(similarity_map, spatial_stats)
 
         with analysis_tabs[3]:
-            self._render_interpretation(nlm_state)
+            self._render_interpretation(weight_stats, spatial_stats)
 
     def _render_coordinate_system(
         self, x: int, y: int, i: int, j: int, search_range: List[Tuple[int, int]]
@@ -306,11 +334,15 @@ class NLMAnalysis:
             else:
                 search_window_size = search_range[1][1] - search_range[1][0]
 
+            # Cast image shape to correct type
+            height, width = img_array.shape[:2]  # Get first two dimensions
+            image_shape = (height, width)  # Create tuple[int, int]
+
             add_search_window_overlay(
                 ax=ax1,
                 center=(x, y),
                 search_window_size=search_window_size,
-                image_shape=img_array.shape,
+                image_shape=image_shape,  # Now correctly typed
                 config=SearchWindowOverlayConfig(),
             )
 
@@ -428,6 +460,3 @@ class NLMAnalysis:
         - Values near 1 suggest good boundary handling
         """
         )
-
-
-# ... (rest of the code remains the same)

@@ -1,15 +1,14 @@
-"""
-Reusable UI components for the application.
-"""
+"""Base component for UI elements."""
 
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from PIL import Image
 
 
-class Component(ABC):
+class BaseUIComponent(ABC):
     """Base class for UI components."""
 
     @abstractmethod
-    def render(self, image: Image.Image = None) -> None:
+    def render(self, image: Optional[Image.Image] = None) -> None:
         """Render the component in the Streamlit app."""

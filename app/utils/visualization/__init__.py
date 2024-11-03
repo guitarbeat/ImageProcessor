@@ -1,5 +1,7 @@
 """Visualization utilities."""
 
+from typing import Tuple
+
 from .config import (
     KernelOverlayConfig,
     SearchWindowOverlayConfig,
@@ -17,6 +19,9 @@ from .overlays import (
     plot_weight_distribution,
 )
 from .utils import add_value_annotations, setup_figure
+
+# Add type alias for image shape
+ImageShape = Tuple[int, int]
 
 __all__ = [
     # Configs

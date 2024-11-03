@@ -200,10 +200,18 @@ class NLMComputation(FilterComputation):
         center_value = float(window[window.shape[0] // 2, window.shape[1] // 2])
 
         # Compute similarity map and normalization factor
+        current_image = st.session_state.get("current_image_array")
+        if current_image is None:
+            st.error("No image loaded")
+            return {}
+
+        selected_x = st.session_state.get("selected_pixel", (0, 0))[0]
+        selected_y = st.session_state.get("selected_pixel", (0, 0))[1]
+
         similarity_map = self.compute_similarity_map(
-            st.session_state.get("current_image_array"),
-            st.session_state.get("selected_pixel", (0, 0))[0],
-            st.session_state.get("selected_pixel", (0, 0))[1],
+            current_image,
+            selected_x,
+            selected_y,
         )
         norm_factor = float(np.sum(similarity_map))
         nlm_value = self.compute(window)
@@ -269,9 +277,8 @@ class NLMComputation(FilterComputation):
                         comp_patch = image[
                             ni - half : ni + half + 1, nj - half : nj + half + 1
                         ]
-
                         # Compute weight using Gaussian-weighted patch distance
-                        distance = self.calculate_patch_distance(ref_patch, comp_patch)
+                        distance = np.sum((ref_patch - comp_patch) ** 2)
                         weight = np.exp(-distance / (self.filter_strength**2))
                         weights_sum += weight
 

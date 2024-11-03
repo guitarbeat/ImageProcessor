@@ -1,4 +1,4 @@
-"""Base class for filter analysis."""
+"""Base analyzer for filter analysis."""
 
 from abc import ABC, abstractmethod
 from typing import Dict
@@ -6,7 +6,7 @@ from typing import Dict
 import numpy as np
 
 
-class FilterAnalysis(ABC):
+class BaseAnalyzer(ABC):
     """Base class for filter-specific analysis."""
 
     @abstractmethod
@@ -19,4 +19,4 @@ class FilterAnalysis(ABC):
 
     @abstractmethod
     def render_analysis(self, img_array: np.ndarray, x: int, y: int) -> None:
-        """Render complete analysis."""
+        """Render complete analysis.""" 

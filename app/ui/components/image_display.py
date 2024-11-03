@@ -4,18 +4,19 @@ Component for image display with matplotlib integration.
 
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional, Tuple, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 from PIL import Image
 
-from app.ui.components.base import Component
+from app.ui.components.component_base import BaseUIComponent
 from app.ui.settings import DisplaySettings
 from app.utils.constants import DEFAULT_DISPLAY_SIZE
 from app.utils.context_managers import figure_context
 from app.utils.visualization import (
+    ImageShape,
     KernelOverlayConfig,
     SearchWindowOverlayConfig,
     add_colorbar,
@@ -49,7 +50,7 @@ def display_context(
         plt.tight_layout()
 
 
-class ImageDisplay(Component):
+class ImageDisplay(BaseUIComponent):
     """Component for displaying images with matplotlib."""
 
     def __init__(self, config: ImageDisplayConfig):
@@ -66,13 +67,19 @@ class ImageDisplay(Component):
             center_alpha=st.session_state.get("center_alpha", 0.5),
         )
 
-    def render(self, image: Image.Image) -> None:
+    def render(self, image: Optional[Image.Image] = None) -> None:
         """Render the image with optional overlays."""
+        if image is None:
+            return
+
         try:
             # Convert image to grayscale and normalize
             if image.mode != "L":
                 image = image.convert("L")
             img_array = np.array(image, dtype=np.float32) / 255.0
+
+            # Cast image shape to expected type
+            img_shape = cast(ImageShape, img_array.shape)
 
             # Store current image array in session state for NLM computation
             st.session_state.current_image_array = img_array
@@ -114,7 +121,7 @@ class ImageDisplay(Component):
                             ax=ax,
                             center=(x, y),
                             kernel_size=self.kernel_config.kernel_size,
-                            image_shape=img_array.shape,
+                            image_shape=img_shape,
                             config=self.kernel_config,
                         )
 
@@ -132,7 +139,7 @@ class ImageDisplay(Component):
                                 ax=ax,
                                 center=(x, y),
                                 search_window_size=search_size,
-                                image_shape=img_array.shape,
+                                image_shape=img_shape,
                                 config=search_config,
                             )
                     else:
@@ -234,7 +241,7 @@ class ImageDisplay(Component):
             # Center of the kernel view
             center=(kernel_size // 2, kernel_size // 2),
             kernel_size=kernel_size,
-            image_shape=kernel.shape,
+            image_shape=cast(ImageShape, kernel.shape),
             config=kernel_config,
         )
 

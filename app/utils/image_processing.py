@@ -1,6 +1,6 @@
 """Image processing utilities."""
 
-from typing import Callable, Literal, Optional, Tuple
+from typing import Callable, Literal, Optional, Tuple, cast
 
 import numpy as np
 import streamlit as st
@@ -80,7 +80,7 @@ def process_image_region(
         ]
 
         # Normalize filter type for comparison
-        filter_type = filter_type.lower()
+        filter_type = cast(FilterType, filter_type.lower())
 
         total_pixels = (y_end - y_start) * (x_end - x_start)
 
@@ -128,7 +128,7 @@ def apply_colormap(image: np.ndarray, colormap: str = "gray") -> Image.Image:
 
     # Create figure without display
     fig = plt.figure(frameon=False)
-    ax = fig.add_axes([0, 0, 1, 1])
+    ax = fig.add_axes((0.0, 0.0, 1.0, 1.0))
     ax.axis("off")
 
     # Apply colormap

@@ -1,11 +1,11 @@
 """Spatial filtering processors for image analysis."""
 
-from typing import Callable, Literal, Optional
+from typing import Any, Callable, Dict, Literal, Optional, Union
 
 import numpy as np
 import streamlit as st
 
-from app.processors.base import ImageProcessor
+from app.processors.filters.filter_base import BaseFilterProcessor
 from app.processors.filters.lsci import LSCIComputation
 from app.processors.filters.nlm import NLMComputation
 from app.ui.settings.display import DisplaySettings
@@ -13,7 +13,7 @@ from app.ui.settings.display import DisplaySettings
 FilterType = Literal["lsci", "nlm", "mean", "std_dev"]
 
 
-class SpatialFilterProcessor(ImageProcessor):
+class SpatialFilterProcessor(BaseFilterProcessor):
     """Processor for spatial filtering computations."""
 
     def __init__(
@@ -25,11 +25,15 @@ class SpatialFilterProcessor(ImageProcessor):
         search_window_size: Optional[int] = None,
     ) -> None:
         """Initialize the spatial filter processor."""
-        super().__init__(kernel_size=kernel_size, chunk_size=chunk_size)
+        super().__init__(kernel_size=kernel_size)
+        self.chunk_size = chunk_size
         self.filter_type = filter_type.lower()
         self.filter_strength = filter_strength
         self.search_window_size = search_window_size
         self.settings = DisplaySettings.from_session_state()
+
+        # Define computation as Union type
+        self.computation: Union[NLMComputation, LSCIComputation]
 
         # Create appropriate computation object
         if self.filter_type == "nlm":
@@ -41,7 +45,7 @@ class SpatialFilterProcessor(ImageProcessor):
         else:
             self.computation = LSCIComputation(kernel_size=kernel_size)
 
-    def _compute_filter(self, window: np.ndarray) -> float:
+    def compute(self, window: np.ndarray) -> float:
         """Compute filter value for a window."""
         if self.filter_type == "nlm":
             return self.computation.compute(window)
@@ -58,12 +62,29 @@ class SpatialFilterProcessor(ImageProcessor):
         else:
             raise ValueError(f"Unknown filter type: {self.filter_type}")
 
+    def get_intermediate_values(self, window: np.ndarray) -> Dict[str, float]:
+        """Get intermediate calculation values for explanation."""
+        if self.filter_type == "nlm":
+            return self.computation.get_intermediate_values(window)
+
+        mean = np.mean(window)
+        std = np.std(window, ddof=1)
+
+        values = {
+            "mean": float(mean),
+            "std": float(std),
+        }
+
+        if self.filter_type == "lsci":
+            values["ratio"] = float(std / mean) if mean > 1e-10 else 0.0
+
+        return values
+
     def process(
         self,
         image: np.ndarray,
         progress_callback: Optional[Callable[[float], None]] = None,
-        **kwargs,
-    ) -> Optional[np.ndarray]:
+    ) -> np.ndarray:
         """Process image with specified filter."""
         try:
             # Input validation
@@ -102,7 +123,7 @@ class SpatialFilterProcessor(ImageProcessor):
             for i in range(result.shape[0]):
                 for j in range(result.shape[1]):
                     window = window_view[i, j]
-                    result[i, j] = self._compute_filter(window)
+                    result[i, j] = self.compute(window)
 
                     processed += 1
                     if progress_callback and total_pixels > 0:
@@ -112,4 +133,28 @@ class SpatialFilterProcessor(ImageProcessor):
 
         except Exception as e:
             st.error(f"Processing error: {str(e)}")
-            return None
+            raise  # Re-raise the exception instead of returning None
+
+    def get_formula_config(self) -> Dict[str, Any]:
+        """Get the mathematical explanation."""
+        if self.filter_type == "nlm":
+            return self.computation.get_formula_config()
+        else:
+            return {
+                "name": self.filter_type.upper(),
+                "formula": (
+                    "std/mean" if self.filter_type == "lsci" else self.filter_type
+                ),
+                "parameters": {"kernel_size": self.kernel_size},
+            }
+
+    def process_image(
+        self,
+        image: np.ndarray,
+        progress_callback: Optional[Callable[[float], None]] = None,
+    ) -> np.ndarray:
+        """Process entire image using this computation."""
+        result = self.process(image, progress_callback)
+        if result is None:
+            raise ValueError("Processing failed")
+        return result

@@ -1,6 +1,6 @@
 """LSCI computation implementation."""
 
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 
@@ -15,6 +15,39 @@ class LSCIComputation(FilterComputation):
             return 0.0
         std = float(np.std(window, ddof=1))
         return std / mean
+
+    def process_image(
+        self,
+        image: np.ndarray,
+        progress_callback: Optional[Callable[[float], None]] = None,
+    ) -> np.ndarray:
+        """Process entire image using LSCI computation."""
+        half = self.kernel_size // 2
+        height, width = image.shape
+
+        # Create result array for valid region only
+        result = np.zeros((height - 2 * half, width - 2 * half), dtype=np.float32)
+
+        # Process valid region only
+        total_pixels = (height - 2 * half) * (width - 2 * half)
+        processed = 0
+
+        # Create sliding window view
+        window_view = np.lib.stride_tricks.sliding_window_view(
+            image, (self.kernel_size, self.kernel_size)
+        )
+
+        # Process each pixel
+        for i in range(result.shape[0]):
+            for j in range(result.shape[1]):
+                window = window_view[i, j]
+                result[i, j] = self.compute(window)
+
+                processed += 1
+                if progress_callback and total_pixels > 0:
+                    progress_callback(processed / total_pixels)
+
+        return result
 
     def get_intermediate_values(self, window: np.ndarray) -> Dict[str, float]:
         """Get all intermediate values used in LSCI computation."""
