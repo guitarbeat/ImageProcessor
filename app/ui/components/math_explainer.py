@@ -11,10 +11,9 @@ import streamlit as st
 from app.processors.computations import LSCIComputation, NLMComputation
 from app.ui.components.base import Component
 from app.ui.settings import DisplaySettings
-from app.utils.latex import create_kernel_matrix_latex, get_search_window_bounds
-from app.utils.visualization import (
-    create_kernel_overlay_config,
-)
+from app.utils.latex import (create_kernel_matrix_latex,
+                             get_search_window_bounds)
+from app.utils.visualization import create_kernel_overlay_config
 
 
 @dataclass
@@ -354,7 +353,7 @@ class MathExplainer(Component):
                 and half <= y < self.config.image_array.shape[0] - half
             ):
                 return self.config.image_array[
-                    y - half : y + half + 1, x - half : x + half + 1
+                    y - half: y + half + 1, x - half: x + half + 1
                 ]
         except Exception as e:
             st.error(f"Error extracting kernel: {str(e)}")
@@ -366,7 +365,8 @@ class MathExplainer(Component):
         """Render formulas with substitutions."""
         try:
             # Create tabs for different formula sections
-            main_tab, details_tab = st.tabs(["Main Formula", "Detailed Explanation"])
+            main_tab, details_tab = st.tabs(
+                ["Main Formula", "Detailed Explanation"])
 
             with main_tab:
                 # Main formula section
@@ -391,11 +391,13 @@ class MathExplainer(Component):
                         with st.expander(formula_info["title"], expanded=False):
                             try:
                                 if "formula" in formula_info:
-                                    st.latex(formula_info["formula"].format(**subs))
+                                    st.latex(
+                                        formula_info["formula"].format(**subs))
 
                                 if "explanation" in formula_info:
                                     st.markdown(
-                                        formula_info["explanation"].format(**subs)
+                                        formula_info["explanation"].format(
+                                            **subs)
                                     )
 
                             except KeyError as e:

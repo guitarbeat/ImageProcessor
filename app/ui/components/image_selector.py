@@ -25,7 +25,8 @@ class ImageSelectorConfig:
     thumbnail_size: tuple[int, int] = (80, 80)
 
     def __post_init__(self):
-        self.allowed_types = self.allowed_types or ["png", "jpg", "jpeg", "tif", "tiff"]
+        self.allowed_types = self.allowed_types or [
+            "png", "jpg", "jpeg", "tif", "tiff"]
 
 
 class ImageSelector(Component):
@@ -85,7 +86,8 @@ class ImageSelector(Component):
         # Create new image with white background
         thumb = Image.new("RGB", size, "white")
         # Resize original image
-        resized = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        resized = image.resize((new_width, new_height),
+                               Image.Resampling.LANCZOS)
         # Calculate position to center the image
         x = (size[0] - new_width) // 2
         y = (size[1] - new_height) // 2
@@ -150,7 +152,8 @@ class ImageSelector(Component):
                         # Clear previous selections
                         st.session_state.selected_region = None
                         st.session_state.processed_regions = set()
-                        self.config.on_image_selected(image, selected_path.name)
+                        self.config.on_image_selected(
+                            image, selected_path.name)
                     except Exception as e:
                         st.error(f"Error loading image: {str(e)}")
 

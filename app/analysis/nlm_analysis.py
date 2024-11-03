@@ -9,14 +9,11 @@ import streamlit as st
 
 from app.analysis.nlm_state import NLMState
 from app.utils.context_managers import figure_context
-from app.utils.visualization import (
-    SearchWindowOverlayConfig,
-    add_search_window_overlay,
-    create_kernel_overlay_config,
-    create_visualization_config,
-    highlight_pixel,
-    plot_similarity_map,
-)
+from app.utils.visualization import (SearchWindowOverlayConfig,
+                                     add_search_window_overlay,
+                                     create_kernel_overlay_config,
+                                     create_visualization_config,
+                                     highlight_pixel, plot_similarity_map)
 
 
 @dataclass
@@ -73,7 +70,8 @@ class NLMAnalysis:
                 / (similarity_map[center_y, center_x] + 1e-10)
             ),
             "corner_center_ratio": float(
-                similarity_map[0, 0] / (similarity_map[center_y, center_x] + 1e-10)
+                similarity_map[0, 0] /
+                (similarity_map[center_y, center_x] + 1e-10)
             ),
             "radial_decay": self._compute_radial_decay(similarity_map),
         }
@@ -84,7 +82,8 @@ class NLMAnalysis:
         y_coords, x_coords = np.ogrid[
             : similarity_map.shape[0], : similarity_map.shape[1]
         ]
-        distances = np.sqrt((y_coords - center_y) ** 2 + (x_coords - center_x) ** 2)
+        distances = np.sqrt((y_coords - center_y) ** 2 +
+                            (x_coords - center_x) ** 2)
 
         # Compute average weight at each unique distance
         unique_distances = np.unique(distances)
@@ -354,7 +353,8 @@ class NLMAnalysis:
         y_coords, x_coords = np.ogrid[
             : similarity_map.shape[0], : similarity_map.shape[1]
         ]
-        distances = np.sqrt((y_coords - center_y) ** 2 + (x_coords - center_x) ** 2)
+        distances = np.sqrt((y_coords - center_y) ** 2 +
+                            (x_coords - center_x) ** 2)
 
         # Compute average weight at each unique distance
         unique_distances = np.unique(distances)
@@ -379,7 +379,8 @@ class NLMAnalysis:
         y_coords, x_coords = np.ogrid[
             : similarity_map.shape[0], : similarity_map.shape[1]
         ]
-        distances = np.sqrt((y_coords - center_y) ** 2 + (x_coords - center_x) ** 2)
+        distances = np.sqrt((y_coords - center_y) ** 2 +
+                            (x_coords - center_x) ** 2)
 
         # Compute average weight at each unique distance
         unique_distances = np.unique(distances)
@@ -389,7 +390,8 @@ class NLMAnalysis:
 
         # Plot directional analysis
         plt.figure(figsize=(8, 6))
-        plt.plot(unique_distances, avg_weights, "o-", label="Directional Analysis")
+        plt.plot(unique_distances, avg_weights,
+                 "o-", label="Directional Analysis")
         plt.xlabel("Distance")
         plt.ylabel("Average Weight")
         plt.title("Directional Analysis")

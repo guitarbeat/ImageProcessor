@@ -88,7 +88,8 @@ class SpatialFilterProcessor(ImageProcessor):
             # For other filters (LSCI, Mean, Std Dev)
             half = self.kernel_size // 2
             height, width = image.shape
-            result = np.zeros((height - 2 * half, width - 2 * half), dtype=np.float32)
+            result = np.zeros(
+                (height - 2 * half, width - 2 * half), dtype=np.float32)
 
             # Create sliding window view
             window_view = np.lib.stride_tricks.sliding_window_view(

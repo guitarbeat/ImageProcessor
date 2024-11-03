@@ -41,7 +41,8 @@ class AppConfig:
                 ui=config_data["ui"],
             )
         except FileNotFoundError:
-            raise FileNotFoundError(f"Configuration file not found at {config_path}")
+            raise FileNotFoundError(
+                f"Configuration file not found at {config_path}")
         except KeyError as e:
             raise KeyError(f"Missing required configuration key: {e}")
         except Exception as e:

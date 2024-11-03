@@ -10,7 +10,8 @@ import streamlit as st
 from matplotlib.collections import LineCollection
 from matplotlib.patches import Rectangle
 
-from .config import KernelOverlayConfig, SearchWindowOverlayConfig, VisualizationConfig
+from .config import (KernelOverlayConfig, SearchWindowOverlayConfig,
+                     VisualizationConfig)
 
 
 def add_colorbar(
@@ -202,10 +203,12 @@ def add_kernel_overlay(
             offset = i - half - 0.5
             # Vertical lines
             if x + offset >= x_min and x + offset <= x_max:
-                grid_segments.append([(x + offset, y_min), (x + offset, y_max)])
+                grid_segments.append(
+                    [(x + offset, y_min), (x + offset, y_max)])
             # Horizontal lines
             if y + offset >= y_min and y + offset <= y_max:
-                grid_segments.append([(x_min, y + offset), (x_max, y + offset)])
+                grid_segments.append(
+                    [(x_min, y + offset), (x_max, y + offset)])
 
         grid_collection = LineCollection(
             grid_segments,

@@ -40,7 +40,7 @@ class NLMComputation(FilterComputation):
         half = self.kernel_size // 2
         try:
             if half <= x < image.shape[1] - half and half <= y < image.shape[0] - half:
-                return image[y - half : y + half + 1, x - half : x + half + 1]
+                return image[y - half: y + half + 1, x - half: x + half + 1]
         except Exception as e:
             st.error(f"Error extracting patch: {str(e)}")
         return None
@@ -135,8 +135,8 @@ class NLMComputation(FilterComputation):
             # Extract corresponding region from window
             half_kernel = self.kernel_size // 2
             window_region = window[
-                half_kernel : window.shape[0] - half_kernel,
-                half_kernel : window.shape[1] - half_kernel,
+                half_kernel: window.shape[0] - half_kernel,
+                half_kernel: window.shape[1] - half_kernel,
             ]
 
             # Ensure shapes match
@@ -158,7 +158,8 @@ class NLMComputation(FilterComputation):
             st.error(f"Error in NLM computation: {str(e)}")
             # Log additional context for debugging
             st.error(f"Window shape: {window.shape}")
-            st.error(f"Selected pixel: {st.session_state.get('selected_pixel')}")
+            st.error(
+                f"Selected pixel: {st.session_state.get('selected_pixel')}")
             # Fallback to center pixel
             return float(window[window.shape[0] // 2, window.shape[1] // 2])
 
@@ -172,7 +173,8 @@ class NLMComputation(FilterComputation):
         height, width = image.shape
 
         # Create result array for valid region only
-        result = np.zeros((height - 2 * half, width - 2 * half), dtype=np.float32)
+        result = np.zeros(
+            (height - 2 * half, width - 2 * half), dtype=np.float32)
 
         # Store full image for patch comparisons
         st.session_state.current_image_array = image
@@ -184,7 +186,7 @@ class NLMComputation(FilterComputation):
         for y in range(half, height - half):
             for x in range(half, width - half):
                 # Extract window
-                window = image[y - half : y + half + 1, x - half : x + half + 1]
+                window = image[y - half: y + half + 1, x - half: x + half + 1]
 
                 # Compute NLM value using compute method
                 result[y - half, x - half] = self.compute(window)
@@ -197,7 +199,8 @@ class NLMComputation(FilterComputation):
 
     def get_intermediate_values(self, window: np.ndarray) -> Dict[str, Any]:
         """Get all intermediate values used in NLM computation."""
-        center_value = float(window[window.shape[0] // 2, window.shape[1] // 2])
+        center_value = float(
+            window[window.shape[0] // 2, window.shape[1] // 2])
 
         # Compute similarity map and normalization factor
         similarity_map = self.compute_similarity_map(
@@ -242,7 +245,8 @@ class NLMComputation(FilterComputation):
         for i in range(half, height - half):
             for j in range(half, width - half):
                 # Get reference patch
-                ref_patch = image[i - half : i + half + 1, j - half : j + half + 1]
+                ref_patch = image[i - half: i +
+                                  half + 1, j - half: j + half + 1]
 
                 # Compute weights for all pixels
                 weights_sum = 0.0
@@ -267,11 +271,12 @@ class NLMComputation(FilterComputation):
 
                         # Get comparison patch
                         comp_patch = image[
-                            ni - half : ni + half + 1, nj - half : nj + half + 1
+                            ni - half: ni + half + 1, nj - half: nj + half + 1
                         ]
 
                         # Compute weight using Gaussian-weighted patch distance
-                        distance = self.calculate_patch_distance(ref_patch, comp_patch)
+                        distance = self.calculate_patch_distance(
+                            ref_patch, comp_patch)
                         weight = np.exp(-distance / (self.filter_strength**2))
                         weights_sum += weight
 

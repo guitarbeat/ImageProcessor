@@ -20,7 +20,8 @@ class LSCIComputation(FilterComputation):
         """Get all intermediate values used in LSCI computation."""
         mean = float(np.mean(window))
         std = float(np.std(window))
-        original_value = float(window[window.shape[0] // 2, window.shape[1] // 2])
+        original_value = float(
+            window[window.shape[0] // 2, window.shape[1] // 2])
         sc = self.compute(window)
 
         return {

@@ -16,17 +16,14 @@ from app.ui.components.base import Component
 from app.ui.components.common import create_pixel_selector
 from app.ui.settings.display import DisplaySettings
 from app.utils.context_managers import figure_context
-from app.utils.visualization import (
-    SearchWindowOverlayConfig,
-    add_kernel_overlay,
-    add_search_window_overlay,
-    add_value_annotations,
-    create_kernel_overlay_config,
-    create_visualization_config,
-    highlight_pixel,
-    plot_similarity_map,
-    plot_weight_distribution,
-)
+from app.utils.visualization import (SearchWindowOverlayConfig,
+                                     add_kernel_overlay,
+                                     add_search_window_overlay,
+                                     add_value_annotations,
+                                     create_kernel_overlay_config,
+                                     create_visualization_config,
+                                     highlight_pixel, plot_similarity_map,
+                                     plot_weight_distribution)
 
 
 @dataclass
@@ -152,7 +149,8 @@ class ProcessingControl(Component):
             st.session_state.selected_pixel = (pixel_x, pixel_y)
 
             # Render coordinate system
-            self._render_coordinate_system(pixel_x, pixel_y, kernel_size, img_array)
+            self._render_coordinate_system(
+                pixel_x, pixel_y, kernel_size, img_array)
 
     def _render_coordinate_system(
         self, x: int, y: int, kernel_size: int, img_array: np.ndarray
@@ -219,7 +217,8 @@ class ProcessingControl(Component):
         )
 
         with tabs[0]:
-            self._render_basic_concept(x, y, i, j, kernel_size, img_array, filter_type)
+            self._render_basic_concept(
+                x, y, i, j, kernel_size, img_array, filter_type)
 
         with tabs[1]:
             self._render_mathematical_formulation(
@@ -227,7 +226,8 @@ class ProcessingControl(Component):
             )
 
         with tabs[2]:
-            self._render_coordinate_transformation(x, y, i, j, kernel_size, filter_type)
+            self._render_coordinate_transformation(
+                x, y, i, j, kernel_size, filter_type)
 
         with tabs[3]:
             self._render_mathematical_interpretation(filter_type)
@@ -473,8 +473,10 @@ class ProcessingControl(Component):
         else:
             half_search = nlm_comp.search_window_size // 2
             search_range = [
-                (max(0, y - half_search), min(img_array.shape[0], y + half_search + 1)),
-                (max(0, x - half_search), min(img_array.shape[1], x + half_search + 1)),
+                (max(0, y - half_search),
+                 min(img_array.shape[0], y + half_search + 1)),
+                (max(0, x - half_search),
+                 min(img_array.shape[1], x + half_search + 1)),
             ]
 
         # Create analyzer and compute similarity map
@@ -509,11 +511,12 @@ class ProcessingControl(Component):
         # Extract kernel
         half_kernel = kernel_size // 2
         kernel = img_array[
-            y - half_kernel : y + half_kernel + 1, x - half_kernel : x + half_kernel + 1
+            y - half_kernel: y + half_kernel + 1, x - half_kernel: x + half_kernel + 1
         ]
 
         # Create analysis tabs
-        analysis_tabs = st.tabs(["🎯 Kernel Region", "📊 Statistics", "🌐 Spatial"])
+        analysis_tabs = st.tabs(
+            ["🎯 Kernel Region", "📊 Statistics", "🌐 Spatial"])
 
         with analysis_tabs[0]:
             self._render_kernel_view(kernel, x, y, kernel_size)
@@ -530,8 +533,8 @@ class ProcessingControl(Component):
         """Extract a patch from the image."""
         half = kernel_size // 2
         return img_array[
-            max(0, y - half) : min(img_array.shape[0], y + half + 1),
-            max(0, x - half) : min(img_array.shape[1], x + half + 1),
+            max(0, y - half): min(img_array.shape[0], y + half + 1),
+            max(0, x - half): min(img_array.shape[1], x + half + 1),
         ]
 
     def _display_patch(self, patch: np.ndarray, title: str) -> None:
@@ -683,7 +686,7 @@ class ProcessingControl(Component):
         for weight, (patch_y, patch_x) in weights_and_positions[:top_k]:
             # Extract patch
             patch = img_array[
-                patch_y - half : patch_y + half + 1, patch_x - half : patch_x + half + 1
+                patch_y - half: patch_y + half + 1, patch_x - half: patch_x + half + 1
             ]
             top_k_patches.append((patch, weight, (patch_x, patch_y)))
 
@@ -826,7 +829,8 @@ class ProcessingControl(Component):
             if len(non_zero_weights) > 1:
                 kde = stats.gaussian_kde(non_zero_weights)
                 x_range = np.linspace(bins[0], bins[-1], 200)
-                ax1.plot(x_range, kde(x_range), "r-", lw=2, label="Density Estimate")
+                ax1.plot(x_range, kde(x_range), "r-",
+                         lw=2, label="Density Estimate")
 
             # Add statistical markers
             ax1.axvline(
@@ -859,7 +863,8 @@ class ProcessingControl(Component):
             # Plot cumulative distribution in bottom subplot
             ax2 = fig.add_subplot(gs[1])
             sorted_weights = np.sort(non_zero_weights)
-            cumulative = np.arange(1, len(sorted_weights) + 1) / len(sorted_weights)
+            cumulative = np.arange(
+                1, len(sorted_weights) + 1) / len(sorted_weights)
             ax2.plot(sorted_weights, cumulative, "b-", label="Cumulative")
             ax2.set_xlabel("Weight Value")
             ax2.set_ylabel("Cumulative")
@@ -972,7 +977,8 @@ class ProcessingControl(Component):
                         ha="center",
                         va="center",
                         color="black",
-                        bbox={"facecolor": "white", "alpha": 0.7, "edgecolor": "none"},
+                        bbox={"facecolor": "white",
+                              "alpha": 0.7, "edgecolor": "none"},
                     )
 
             # Add kernel overlay
@@ -1036,7 +1042,8 @@ class ProcessingControl(Component):
                     """
                     )
                 else:
-                    st.warning("Cannot compute distribution metrics (mean is zero)")
+                    st.warning(
+                        "Cannot compute distribution metrics (mean is zero)")
 
         except Exception as e:
             st.error(f"Error computing kernel statistics: {str(e)}")
