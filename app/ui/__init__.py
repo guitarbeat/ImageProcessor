@@ -1,5 +1,5 @@
 """UI components and settings."""
-from .settings import DisplaySettings, ProcessingSettings
+
 from .components import (
     Component,
     ImageDisplay,
@@ -10,29 +10,29 @@ from .components import (
     MathExplainerConfig,
     ProcessingControl,
     ProcessingControlConfig,
-    ProcessingParamsControl,
     ProcessingParams,
+    ProcessingParamsControl,
     Sidebar,
-    SidebarConfig
+    SidebarConfig,
 )
+from .settings import DisplaySettings, ProcessingSettings
 
 __all__ = [
     # Settings
-    'DisplaySettings',
-    'ProcessingSettings',
-    
+    "DisplaySettings",
+    "ProcessingSettings",
     # Components
-    'Component',
-    'ImageDisplay',
-    'ImageDisplayConfig',
-    'ImageSelector',
-    'ImageSelectorConfig',
-    'MathExplainer',
-    'MathExplainerConfig',
-    'ProcessingControl',
-    'ProcessingControlConfig',
-    'ProcessingParamsControl',
-    'ProcessingParams',
-    'Sidebar',
-    'SidebarConfig'
+    "Component",
+    "ImageDisplay",
+    "ImageDisplayConfig",
+    "ImageSelector",
+    "ImageSelectorConfig",
+    "MathExplainer",
+    "MathExplainerConfig",
+    "ProcessingControl",
+    "ProcessingControlConfig",
+    "ProcessingParamsControl",
+    "ProcessingParams",
+    "Sidebar",
+    "SidebarConfig",
 ]

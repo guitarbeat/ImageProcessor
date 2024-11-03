@@ -25,5 +25,5 @@ PROGRESS_BAR_STYLES = {
     "LSCI": "rgb(255, 75, 75)",
     "Mean": "rgb(75, 192, 192)",
     "Standard Deviation": "rgb(255, 159, 64)",
-    "NLM": "rgb(54, 162, 235)"
+    "NLM": "rgb(54, 162, 235)",
 }

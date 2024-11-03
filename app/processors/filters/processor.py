@@ -1,5 +1,7 @@
 """Spatial filtering processors for image analysis."""
-from typing import Literal, Optional, Callable
+
+from typing import Callable, Literal, Optional
+
 import numpy as np
 import streamlit as st
 
@@ -10,16 +12,17 @@ from app.ui.settings.display import DisplaySettings
 
 FilterType = Literal["lsci", "nlm", "mean", "std_dev"]
 
+
 class SpatialFilterProcessor(ImageProcessor):
     """Processor for spatial filtering computations."""
-    
+
     def __init__(
         self,
         kernel_size: int = 7,
         filter_type: FilterType = "lsci",
         chunk_size: int = 1000,
         filter_strength: float = 10.0,
-        search_window_size: Optional[int] = None
+        search_window_size: Optional[int] = None,
     ) -> None:
         """Initialize the spatial filter processor."""
         super().__init__(kernel_size=kernel_size, chunk_size=chunk_size)
@@ -33,7 +36,7 @@ class SpatialFilterProcessor(ImageProcessor):
             self.computation = NLMComputation(
                 kernel_size=kernel_size,
                 filter_strength=filter_strength,
-                search_window_size=search_window_size
+                search_window_size=search_window_size,
             )
         else:
             self.computation = LSCIComputation(kernel_size=kernel_size)
@@ -55,9 +58,12 @@ class SpatialFilterProcessor(ImageProcessor):
         else:
             raise ValueError(f"Unknown filter type: {self.filter_type}")
 
-    def process(self, image: np.ndarray, 
-                progress_callback: Optional[Callable[[float], None]] = None,
-                **kwargs) -> Optional[np.ndarray]:
+    def process(
+        self,
+        image: np.ndarray,
+        progress_callback: Optional[Callable[[float], None]] = None,
+        **kwargs,
+    ) -> Optional[np.ndarray]:
         """Process image with specified filter."""
         try:
             # Input validation
@@ -73,8 +79,7 @@ class SpatialFilterProcessor(ImageProcessor):
                 st.session_state.current_image_array = image
                 # For NLM, delegate to the NLM computation object
                 result = self.computation.process_image(
-                    image=image,
-                    progress_callback=progress_callback
+                    image=image, progress_callback=progress_callback
                 )
                 if result is None:
                     raise ValueError("NLM processing returned None")
@@ -83,7 +88,7 @@ class SpatialFilterProcessor(ImageProcessor):
             # For other filters (LSCI, Mean, Std Dev)
             half = self.kernel_size // 2
             height, width = image.shape
-            result = np.zeros((height - 2*half, width - 2*half), dtype=np.float32)
+            result = np.zeros((height - 2 * half, width - 2 * half), dtype=np.float32)
 
             # Create sliding window view
             window_view = np.lib.stride_tricks.sliding_window_view(

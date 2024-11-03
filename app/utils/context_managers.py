@@ -1,5 +1,7 @@
 """Context managers for visualization."""
+
 from contextlib import contextmanager
+
 import matplotlib.pyplot as plt
 
 

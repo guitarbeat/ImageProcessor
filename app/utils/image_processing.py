@@ -1,10 +1,13 @@
 """Image processing utilities."""
-from typing import Tuple, Optional, Literal, Callable
+
+from typing import Callable, Literal, Optional, Tuple
+
 import numpy as np
-from PIL import Image
 import streamlit as st
+from PIL import Image
 
 FilterType = Literal["lsci", "nlm", "mean", "std_dev", "standard deviation"]
+
 
 @st.cache_data
 def preprocess_image(_image: Image.Image) -> Tuple[Image.Image, np.ndarray]:
@@ -12,13 +15,15 @@ def preprocess_image(_image: Image.Image) -> Tuple[Image.Image, np.ndarray]:
     Cache preprocessed images. Uses underscore prefix to exclude image from hashing.
     Since we're converting the image anyway, we don't need to hash the input.
     """
-    if _image.mode != 'L':
-        _image = _image.convert('L')
+    if _image.mode != "L":
+        _image = _image.convert("L")
     img_array = np.array(_image, dtype=np.float32) / 255.0
     return _image, img_array
 
 
-def get_valid_kernel_bounds(image_size: tuple[int, int], kernel_size: int) -> tuple[tuple[int, int], tuple[int, int]]:
+def get_valid_kernel_bounds(
+    image_size: tuple[int, int], kernel_size: int
+) -> tuple[tuple[int, int], tuple[int, int]]:
     """Calculate valid coordinate ranges for kernel processing."""
     half_kernel = kernel_size // 2
     width, height = image_size
@@ -35,7 +40,7 @@ def process_image_region(
     filter_type: FilterType,
     region: Optional[Tuple[int, int, int, int]] = None,
     max_pixel: Optional[Tuple[int, int]] = None,
-    _progress_callback: Optional[Callable[[float], None]] = None
+    _progress_callback: Optional[Callable[[float], None]] = None,
 ) -> Optional[np.ndarray]:
     """
     Process image region with specified filter.
@@ -43,7 +48,7 @@ def process_image_region(
     try:
         # Get kernel boundaries
         half_kernel = kernel_size // 2
-        
+
         # Calculate processing bounds
         if max_pixel is not None:
             max_x, max_y = max_pixel
@@ -62,31 +67,29 @@ def process_image_region(
 
         # Create result array with same shape as input
         result = np.zeros_like(image)
-        
+
         # Create window view for efficient computation
         window_view = np.lib.stride_tricks.sliding_window_view(
             image, (kernel_size, kernel_size)
         )
-        
+
         # Get the valid portion of the window view
         valid_view = window_view[
-            y_start-half_kernel:y_end-half_kernel,
-            x_start-half_kernel:x_end-half_kernel
+            y_start - half_kernel : y_end - half_kernel,
+            x_start - half_kernel : x_end - half_kernel,
         ]
-        
+
         # Normalize filter type for comparison
         filter_type = filter_type.lower()
-        
+
         total_pixels = (y_end - y_start) * (x_end - x_start)
-        
+
         # Apply specific filter computation based on type
         if filter_type == "lsci":
             means = np.mean(valid_view, axis=(2, 3))
             stds = np.std(valid_view, axis=(2, 3), ddof=1)
             mask = means > 1e-10
-            result[y_start:y_end, x_start:x_end] = np.where(
-                mask, stds / means, 0.0
-            )
+            result[y_start:y_end, x_start:x_end] = np.where(mask, stds / means, 0.0)
         elif filter_type in ["mean", "standard deviation", "std_dev"]:
             if filter_type == "mean":
                 values = np.mean(valid_view, axis=(2, 3))
@@ -98,14 +101,14 @@ def process_image_region(
             return None
         else:
             raise ValueError(f"Unknown filter type: {filter_type}")
-            
+
         # Update progress if callback provided
         if _progress_callback:
             update_interval = max(1, total_pixels // 100)
             for i in range(0, total_pixels, update_interval):
                 _progress_callback(min(1.0, i / total_pixels))
             _progress_callback(1.0)
-            
+
         return result
 
     except Exception as e:
@@ -114,31 +117,31 @@ def process_image_region(
 
 
 @st.cache_data
-def apply_colormap(image: np.ndarray, colormap: str = 'gray') -> Image.Image:
+def apply_colormap(image: np.ndarray, colormap: str = "gray") -> Image.Image:
     """Apply colormap to image and convert to PIL Image."""
-    import matplotlib.pyplot as plt
     import matplotlib as mpl
-    
+    import matplotlib.pyplot as plt
+
     # Normalize image to [0, 1] if needed
     if image.dtype != np.float32 or image.min() < 0 or image.max() > 1:
         image = (image - image.min()) / (image.max() - image.min() + 1e-10)
-    
+
     # Create figure without display
     fig = plt.figure(frameon=False)
     ax = fig.add_axes([0, 0, 1, 1])
-    ax.axis('off')
-    
+    ax.axis("off")
+
     # Apply colormap
     cm = mpl.colormaps[colormap]
     colored_image = cm(image)
-    
+
     # Convert to uint8
     colored_image = (colored_image * 255).astype(np.uint8)
-    
+
     # Convert to PIL
     result = Image.fromarray(colored_image)
-    
+
     # Cleanup
     plt.close(fig)
-    
+
     return result

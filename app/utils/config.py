@@ -1,11 +1,15 @@
 """Configuration management for the application."""
+
 from dataclasses import dataclass
 from pathlib import Path
+
 import yaml
+
 
 @dataclass
 class AppConfig:
     """Application configuration."""
+
     title: str
     description: str
     theme: str
@@ -18,23 +22,23 @@ class AppConfig:
     ui: dict
 
     @classmethod
-    def load(cls, config_path: str = "app/config.yaml") -> 'AppConfig':
+    def load(cls, config_path: str = "app/config.yaml") -> "AppConfig":
         """Load configuration from YAML file."""
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path) as f:
                 config_data = yaml.safe_load(f)
-            
+
             return cls(
-                title=config_data['app']['title'],
-                description=config_data['app']['description'],
-                theme=config_data['app']['theme'],
-                layout=config_data['app']['layout'],
-                page_icon=config_data['app']['page_icon'],
-                logo=config_data['app']['logo'],
-                paths=config_data['paths'],
-                algorithms=config_data['algorithms'],
-                processing=config_data['processing'],
-                ui=config_data['ui']
+                title=config_data["app"]["title"],
+                description=config_data["app"]["description"],
+                theme=config_data["app"]["theme"],
+                layout=config_data["app"]["layout"],
+                page_icon=config_data["app"]["page_icon"],
+                logo=config_data["app"]["logo"],
+                paths=config_data["paths"],
+                algorithms=config_data["algorithms"],
+                processing=config_data["processing"],
+                ui=config_data["ui"],
             )
         except FileNotFoundError:
             raise FileNotFoundError(f"Configuration file not found at {config_path}")
@@ -46,12 +50,12 @@ class AppConfig:
     @property
     def sample_images_path(self) -> Path:
         """Get the path to sample images directory."""
-        return Path(self.paths['sample_images'])
+        return Path(self.paths["sample_images"])
 
     @property
     def latex_path(self) -> Path:
         """Get the path to LaTeX assets directory."""
-        return Path(self.paths['latex'])
+        return Path(self.paths["latex"])
 
     def get_algorithm_config(self, name: str) -> dict:
         """Get configuration for specific algorithm."""

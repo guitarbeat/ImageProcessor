@@ -1,5 +1,7 @@
 """LaTeX formula configurations for mathematical explanations."""
-from typing import Dict, Any, Optional, Tuple
+
+from typing import Any, Dict, Optional, Tuple
+
 import numpy as np
 
 SPECKLE_FORMULA_CONFIG: Dict[str, Any] = {
@@ -29,7 +31,7 @@ SPECKLE_FORMULA_CONFIG: Dict[str, Any] = {
                 "1. A pixel at $(x,y)$ can only be processed if it has sufficient neighbors\n\n"
                 "2. Valid processing region: {valid_width}×{valid_height} pixels\n\n"
                 "3. Input coordinates: $(x,y)$ → Output: $({processed_x},{processed_y})$"
-            )
+            ),
         },
         {
             "title": "Mean Filter",
@@ -41,7 +43,7 @@ SPECKLE_FORMULA_CONFIG: Dict[str, Any] = {
                 "**Mean Calculation:**\n"
                 "1. Sum all {total_pixels} pixels in the kernel\n"
                 "2. Divide by total pixels for local average = {mean:.4f}"
-            )
+            ),
         },
         {
             "title": "Standard Deviation",
@@ -55,9 +57,9 @@ SPECKLE_FORMULA_CONFIG: Dict[str, Any] = {
                 "1. Subtract mean ({mean:.4f}) from each pixel\n"
                 "2. Square differences and average\n"
                 "3. Take square root for final value = {std:.4f}"
-            )
-        }
-    ]
+            ),
+        },
+    ],
 }
 
 NLM_FORMULA_CONFIG: Dict[str, Any] = {
@@ -92,7 +94,7 @@ NLM_FORMULA_CONFIG: Dict[str, Any] = {
                 "2. Output coordinates $(i,j)$: Position in processed image\n"
                 "3. Search coordinates $(s,t)$: Positions within search window\n\n"
                 "The kernel size {kernel_size}×{kernel_size} determines the offset between input and output coordinates."
-            )
+            ),
         },
         {
             "title": "Patch Similarity",
@@ -108,7 +110,7 @@ NLM_FORMULA_CONFIG: Dict[str, Any] = {
                 "2. $P_{{s,t}}$: Patch centered at search position $(s,t)$\n"
                 "3. $(p,q)$: Local coordinates within patches\n"
                 "4. Filter strength $h = {filter_strength:.2f}$ controls similarity sensitivity"
-            )
+            ),
         },
         {
             "title": "Normalization",
@@ -123,7 +125,7 @@ NLM_FORMULA_CONFIG: Dict[str, Any] = {
                 "1. Sum all weights $w_{{{x},{y}}}(s,t)$ to get $C_{{{x},{y}}} = {norm_factor:.{decimals}f}$\n"
                 "2. Divide each weight by $C_{{{x},{y}}}$ to normalize\n"
                 "3. Ensures $\sum w_{{{x},{y}}}^{{\text{{norm}}}}(s,t) = 1$"
-            )
+            ),
         },
         {
             "title": "Search Region",
@@ -139,33 +141,39 @@ NLM_FORMULA_CONFIG: Dict[str, Any] = {
                 "2. Search area: {search_window_description}\n"
                 "3. Valid pixel positions: $({processed_x},{processed_y})$ in output\n"
                 "4. Larger search area → more potential matches but slower computation"
-            )
-        }
-    ]
+            ),
+        },
+    ],
 }
 
-def create_kernel_matrix_latex(kernel: np.ndarray, center_value: float, decimals: int = 3) -> str:
+
+def create_kernel_matrix_latex(
+    kernel: np.ndarray, center_value: float, decimals: int = 3
+) -> str:
     """Create LaTeX matrix representation of kernel."""
     matrix = []
     for i in range(kernel.shape[0]):
         row = []
         for j in range(kernel.shape[1]):
             value = kernel[i, j]
-            if i == kernel.shape[0]//2 and j == kernel.shape[1]//2:
+            if i == kernel.shape[0] // 2 and j == kernel.shape[1] // 2:
                 row.append(r"\mathbf{" + f"{value:.{decimals}f}" + "}")
             else:
                 row.append(f"{value:.{decimals}f}")
         matrix.append(" & ".join(row))
     return r"\begin{bmatrix}" + r"\\" + r"\\".join(matrix) + r"\end{bmatrix}"
 
-def get_search_window_bounds(x: int, y: int, search_size: Optional[int], image_width: int, image_height: int) -> Dict[str, int]:
+
+def get_search_window_bounds(
+    x: int, y: int, search_size: Optional[int], image_width: int, image_height: int
+) -> Dict[str, int]:
     """Calculate search window bounds for LaTeX formulas."""
     if search_size is None:
         return {
             "search_x_min": 0,
             "search_x_max": image_width,
             "search_y_min": 0,
-            "search_y_max": image_height
+            "search_y_max": image_height,
         }
     else:
         half_search = search_size // 2
@@ -173,26 +181,32 @@ def get_search_window_bounds(x: int, y: int, search_size: Optional[int], image_w
             "search_x_min": max(0, x - half_search),
             "search_x_max": min(image_width, x + half_search),
             "search_y_min": max(0, y - half_search),
-            "search_y_max": min(image_height, y + half_search)
+            "search_y_max": min(image_height, y + half_search),
         }
 
-def _create_substitution_dict(self, input_coords: Tuple[int, int], 
-                            output_coords: Tuple[int, int],
-                            kernel: np.ndarray, values: Dict[str, Any],
-                            computation: Any) -> Dict[str, Any]:
+
+def _create_substitution_dict(
+    self,
+    input_coords: Tuple[int, int],
+    output_coords: Tuple[int, int],
+    kernel: np.ndarray,
+    values: Dict[str, Any],
+    computation: Any,
+) -> Dict[str, Any]:
     """Create substitution dictionary with consistent coordinate notation."""
     x, y = input_coords
     i, j = output_coords  # Use output coordinates directly
     half_kernel = self.config.kernel_size // 2
-    
+
     # Get search window bounds using input coordinates
     search_bounds = get_search_window_bounds(
-        x=x, y=y,
-        search_size=getattr(computation, 'search_window_size', None),
+        x=x,
+        y=y,
+        search_size=getattr(computation, "search_window_size", None),
         image_width=self.config.image_array.shape[1],
-        image_height=self.config.image_array.shape[0]
+        image_height=self.config.image_array.shape[0],
     )
-    
+
     # Format values with consistent coordinate notation
     formatted_values = {}
     for k, v in values.items():
@@ -202,18 +216,18 @@ def _create_substitution_dict(self, input_coords: Tuple[int, int],
             formatted_values[k] = int(v)
         else:
             formatted_values[k] = v
-    
+
     # Add processed coordinates explicitly
     processed_coords = {
-        'processed_x': i,  # Use output coordinates
-        'processed_y': j,  # Use output coordinates
-        'valid_x_min': half_kernel,
-        'valid_x_max': self.config.image_array.shape[1] - half_kernel,
-        'valid_y_min': half_kernel,
-        'valid_y_max': self.config.image_array.shape[0] - half_kernel,
-        'total_pixels': self.config.kernel_size * self.config.kernel_size
+        "processed_x": i,  # Use output coordinates
+        "processed_y": j,  # Use output coordinates
+        "valid_x_min": half_kernel,
+        "valid_x_max": self.config.image_array.shape[1] - half_kernel,
+        "valid_y_min": half_kernel,
+        "valid_y_max": self.config.image_array.shape[0] - half_kernel,
+        "total_pixels": self.config.kernel_size * self.config.kernel_size,
     }
-    
+
     return {
         # Input coordinates
         "x": x,
@@ -228,9 +242,7 @@ def _create_substitution_dict(self, input_coords: Tuple[int, int],
         "half_kernel": half_kernel,
         # Kernel visualization
         "kernel_matrix_latex": create_kernel_matrix_latex(
-            kernel, 
-            float(values['original_value']),
-            decimals=self.vis_config.decimals
+            kernel, float(values["original_value"]), decimals=self.vis_config.decimals
         ),
         # Image dimensions
         "image_height": self.config.image_array.shape[0],
@@ -240,5 +252,5 @@ def _create_substitution_dict(self, input_coords: Tuple[int, int],
         # Processed coordinates
         **processed_coords,
         # Additional values
-        **formatted_values
+        **formatted_values,
     }
