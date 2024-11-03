@@ -85,8 +85,7 @@ class ProcessingParamsControl(Component):
 
         # Filter Selection
         st.markdown("---")
-        filter_options = {"LSCI": "🌟 Speckle Contrast",
-                          "NLM": "🔍 Non-Local Means"}
+        filter_options = {"LSCI": "🌟 Speckle Contrast", "NLM": "🔍 Non-Local Means"}
         filter_type = st.radio(
             "Filter Type",
             options=list(filter_options.keys()),

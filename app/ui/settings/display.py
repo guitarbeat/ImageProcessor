@@ -4,8 +4,7 @@ from typing import TYPE_CHECKING
 import streamlit as st
 
 if TYPE_CHECKING:
-    from app.utils.visualization import (KernelOverlayConfig,
-                                         VisualizationConfig)
+    from app.utils.visualization import KernelOverlayConfig, VisualizationConfig
 
 
 @dataclass
@@ -70,11 +69,9 @@ class DisplaySettings:
             grid_width=int(st.session_state.get("grid_width", 1)),
             center_color=str(st.session_state.get("center_color", "#FF0000")),
             center_alpha=float(st.session_state.get("center_alpha", 0.5)),
-            annotation_color=str(st.session_state.get(
-                "annotation_color", "#FFFFFF")),
+            annotation_color=str(st.session_state.get("annotation_color", "#FFFFFF")),
             annotation_bg_color=str(
                 st.session_state.get("annotation_bg_color", "#000000")
             ),
-            annotation_bg_alpha=float(
-                st.session_state.get("annotation_bg_alpha", 0.5)),
+            annotation_bg_alpha=float(st.session_state.get("annotation_bg_alpha", 0.5)),
         )

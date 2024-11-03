@@ -63,8 +63,7 @@ def process_image_region(
             y_end = min(y2 + 1, image.shape[0] - half_kernel)
         else:
             x_start, y_start = half_kernel, half_kernel
-            y_end, x_end = image.shape[0] - \
-                half_kernel, image.shape[1] - half_kernel
+            y_end, x_end = image.shape[0] - half_kernel, image.shape[1] - half_kernel
 
         # Create result array with same shape as input
         result = np.zeros_like(image)
@@ -76,8 +75,8 @@ def process_image_region(
 
         # Get the valid portion of the window view
         valid_view = window_view[
-            y_start - half_kernel: y_end - half_kernel,
-            x_start - half_kernel: x_end - half_kernel,
+            y_start - half_kernel : y_end - half_kernel,
+            x_start - half_kernel : x_end - half_kernel,
         ]
 
         # Normalize filter type for comparison
@@ -90,8 +89,7 @@ def process_image_region(
             means = np.mean(valid_view, axis=(2, 3))
             stds = np.std(valid_view, axis=(2, 3), ddof=1)
             mask = means > 1e-10
-            result[y_start:y_end, x_start:x_end] = np.where(
-                mask, stds / means, 0.0)
+            result[y_start:y_end, x_start:x_end] = np.where(mask, stds / means, 0.0)
         elif filter_type in ["mean", "standard deviation", "std_dev"]:
             if filter_type == "mean":
                 values = np.mean(valid_view, axis=(2, 3))

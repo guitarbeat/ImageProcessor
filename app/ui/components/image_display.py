@@ -15,11 +15,15 @@ from app.ui.components.base import Component
 from app.ui.settings import DisplaySettings
 from app.utils.constants import DEFAULT_DISPLAY_SIZE
 from app.utils.context_managers import figure_context
-from app.utils.visualization import (KernelOverlayConfig,
-                                     SearchWindowOverlayConfig, add_colorbar,
-                                     add_kernel_overlay,
-                                     add_search_window_overlay, add_statistics,
-                                     highlight_pixel)
+from app.utils.visualization import (
+    KernelOverlayConfig,
+    SearchWindowOverlayConfig,
+    add_colorbar,
+    add_kernel_overlay,
+    add_search_window_overlay,
+    add_statistics,
+    highlight_pixel,
+)
 from app.utils.visualization.utils import add_value_annotations, setup_figure
 
 
@@ -182,7 +186,7 @@ class ImageDisplay(Component):
                 half <= x < img_array.shape[1] - half
                 and half <= y < img_array.shape[0] - half
             ):
-                return img_array[y - half: y + half + 1, x - half: x + half + 1]
+                return img_array[y - half : y + half + 1, x - half : x + half + 1]
         except Exception as e:
             st.error(f"Error extracting kernel: {str(e)}")
         return None

@@ -35,8 +35,7 @@ class ImageProcessor(ABC):
         x_end = min(width, x + half + 1)
 
         # Create padded window
-        window = np.zeros(
-            (self.kernel_size, self.kernel_size), dtype=image.dtype)
+        window = np.zeros((self.kernel_size, self.kernel_size), dtype=image.dtype)
 
         # Fill window with available values
         window_y_start = half - (y - y_start)

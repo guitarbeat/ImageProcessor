@@ -7,9 +7,12 @@ import streamlit as st
 from PIL import Image
 
 from app.ui.components.base import Component
-from app.ui.components.processing_params import (CommonParams, NLMParams,
-                                                 ProcessingParams,
-                                                 ProcessingParamsControl)
+from app.ui.components.processing_params import (
+    CommonParams,
+    NLMParams,
+    ProcessingParams,
+    ProcessingParamsControl,
+)
 from app.ui.settings.display import DisplaySettings
 from app.utils.constants import DEFAULT_COLORMAP
 

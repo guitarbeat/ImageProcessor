@@ -68,14 +68,12 @@ class NLMState:
             return {
                 "x_min": max(self.kernel_size // 2, x - half_search),
                 "x_max": min(
-                    st.session_state.image_array.shape[1] -
-                    self.kernel_size // 2,
+                    st.session_state.image_array.shape[1] - self.kernel_size // 2,
                     x + half_search,
                 ),
                 "y_min": max(self.kernel_size // 2, y - half_search),
                 "y_max": min(
-                    st.session_state.image_array.shape[0] -
-                    self.kernel_size // 2,
+                    st.session_state.image_array.shape[0] - self.kernel_size // 2,
                     y + half_search,
                 ),
             }

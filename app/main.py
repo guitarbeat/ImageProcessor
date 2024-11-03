@@ -10,12 +10,16 @@ from streamlit_image_comparison import image_comparison
 # Processor imports
 from app.processors.filters import SpatialFilterProcessor
 from app.ui.components.image_display import ImageDisplay, ImageDisplayConfig
+
 # Component imports
 from app.ui.components.image_selector import ImageSelector, ImageSelectorConfig
-from app.ui.components.processing_control import (ProcessingControl,
-                                                  ProcessingControlConfig)
+from app.ui.components.processing_control import (
+    ProcessingControl,
+    ProcessingControlConfig,
+)
 from app.ui.components.processing_params import ProcessingParams
 from app.ui.components.sidebar import DisplaySettings, Sidebar, SidebarConfig
+
 # Local application imports
 from app.utils.config import AppConfig
 from app.utils.image_processing import apply_colormap, preprocess_image

@@ -34,6 +34,5 @@ def add_value_annotations(
                 ha="center",
                 va="center",
                 color=color,
-                bbox={"facecolor": bg_color,
-                      "alpha": bg_alpha, "edgecolor": "none"},
+                bbox={"facecolor": bg_color, "alpha": bg_alpha, "edgecolor": "none"},
             )
