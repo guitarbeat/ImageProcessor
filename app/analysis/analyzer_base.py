@@ -19,4 +19,4 @@ class BaseAnalyzer(ABC):
 
     @abstractmethod
     def render_analysis(self, img_array: np.ndarray, x: int, y: int) -> None:
-        """Render complete analysis.""" 
+        """Render complete analysis."""

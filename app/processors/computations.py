@@ -5,11 +5,6 @@ from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 
-from app.processors.filters.lsci import LSCIComputation
-from app.processors.filters.nlm import NLMComputation
-
-__all__ = ["LSCIComputation", "NLMComputation"]
-
 
 class FilterComputation(ABC):
     """Base class for filter computations and their mathematical explanations."""
@@ -37,4 +32,4 @@ class FilterComputation(ABC):
         progress_callback: Optional[Callable[[float], None]] = None,
     ) -> np.ndarray:
         """Process entire image using this computation."""
-        raise NotImplementedError  # This should probably be abstract unless you want to provide a default implementation
+        raise NotImplementedError

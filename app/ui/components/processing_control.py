@@ -41,11 +41,20 @@ class ProcessingControlConfig:
     def __post_init__(self) -> None:
         """Initialize default settings if not provided."""
         if self.initial_settings is None:
-            self.initial_settings = {
-                "process_full_image": True,
-                "selected_region": None,
-                "processing_progress": 0,
-            }
+            self.initial_settings = {}
+        
+        # Ensure all required settings have defaults
+        defaults = {
+            "process_full_image": True,
+            "selected_region": None,
+            "processing_progress": 0,
+            "selected_pixel": None,
+        }
+        
+        for key, value in defaults.items():
+            if key not in self.initial_settings:
+                self.initial_settings[key] = value
+
         if self.display_settings is None:
             self.display_settings = DisplaySettings()
 
@@ -383,7 +392,7 @@ class ProcessingControl(BaseUIComponent):
         """Render mathematical interpretation."""
         if filter_type == "nlm":
             st.markdown(
-                """
+                r"""
             ### Mathematical Properties
             
             1. **Weight Properties**:
@@ -404,7 +413,7 @@ class ProcessingControl(BaseUIComponent):
             )
         else:
             st.markdown(
-                """
+                r"""
             ### Mathematical Properties
             
             1. **Contrast Properties**:
@@ -478,6 +487,13 @@ class ProcessingControl(BaseUIComponent):
                 (max(0, x - half_search), min(img_array.shape[1], x + half_search + 1)),
             ]
 
+        # Update session state with search range
+        st.session_state.search_range = search_range
+
+        # Compute and store similarity map
+        similarity_map = nlm_comp.compute_similarity_map(img_array, x, y)
+        st.session_state.similarity_map = similarity_map
+
         # Create analyzer and compute similarity map
         config = NLMAnalysisConfig(
             filter_strength=nlm_comp.filter_strength,
@@ -485,7 +501,6 @@ class ProcessingControl(BaseUIComponent):
             search_window_size=nlm_comp.search_window_size,
         )
         analyzer = NLMAnalysis(config)
-        similarity_map = nlm_comp.compute_similarity_map(img_array, x, y)
 
         # Create analysis tabs
         analysis_tabs = st.tabs(["🎯 Search Region", "📊 Weights", "🌐 Spatial"])
@@ -1175,16 +1190,15 @@ class ProcessingControl(BaseUIComponent):
                 "decimals": decimals,
                 "use_full_image": nlm_state.use_full_image,
                 "process_full_image": nlm_state.use_full_image,
+                "selected_region": st.session_state.get("selected_region", None),
             }
 
             # Add NLM-specific settings if applicable
             if nlm_state.filter_type == "nlm":
-                settings_update.update(
-                    {
-                        "show_analysis": show_analysis,
-                        "show_formulas": show_formulas,
-                        "display_mode": display_mode,
-                    }
-                )
+                settings_update.update({
+                    "show_analysis": show_analysis,
+                    "show_formulas": show_formulas,
+                    "display_mode": display_mode,
+                })
 
             self.config.on_settings_changed(settings_update)

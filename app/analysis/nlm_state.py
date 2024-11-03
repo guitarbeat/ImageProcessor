@@ -46,6 +46,14 @@ class NLMState:
         kernel_size = st.session_state.get("kernel_size", 7)
         half_kernel = kernel_size // 2
 
+        # Initialize similarity_map if not present
+        if "similarity_map" not in st.session_state:
+            st.session_state.similarity_map = None
+
+        # Initialize search_range if not present
+        if "search_range" not in st.session_state:
+            st.session_state.search_range = [(0, 0), (0, 0)]
+
         return cls(
             input_coords=(x, y),
             output_coords=(x - half_kernel, y - half_kernel),
@@ -111,6 +119,8 @@ class NLMState:
             "selected_filters": ["NLM"],
             "needs_processing": True,
             "selected_pixel": None,  # Add explicit default for selected_pixel
+            "similarity_map": None,  # Initialize similarity_map
+            "search_range": [(0, 0), (0, 0)],  # Initialize search_range with default values
         }
         for key, value in defaults.items():
             if key not in st.session_state:

@@ -9,7 +9,8 @@ import numpy as np
 import streamlit as st
 from PIL import Image
 
-from app.processors.computations import LSCIComputation, NLMComputation
+from app.processors.filters.lsci import LSCIComputation
+from app.processors.filters.nlm import NLMComputation
 from app.ui.components.component_base import BaseUIComponent
 from app.ui.settings import DisplaySettings
 from app.utils.context_managers import figure_context

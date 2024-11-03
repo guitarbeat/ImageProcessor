@@ -91,6 +91,10 @@ class UIState:
         if not hasattr(st.session_state, "initialized"):
             # Set defaults from config where applicable
             defaults = {**self.DEFAULT_STATE}
+            
+            # Add selected_region to defaults if not present
+            if "selected_region" not in defaults:
+                defaults["selected_region"] = None
 
             # Override with config values if they exist
             if "show_colorbar" in self.config.ui:
