@@ -12,14 +12,11 @@ class FilterAnalysis(ABC):
     @abstractmethod
     def analyze_weights(self, data: np.ndarray) -> Dict[str, float]:
         """Analyze weight distribution."""
-        pass
 
     @abstractmethod
     def analyze_spatial_patterns(self, data: np.ndarray) -> Dict[str, float]:
         """Analyze spatial patterns."""
-        pass
 
     @abstractmethod
     def render_analysis(self, img_array: np.ndarray, x: int, y: int) -> None:
         """Render complete analysis."""
-        pass

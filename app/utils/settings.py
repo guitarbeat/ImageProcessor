@@ -2,10 +2,11 @@
 
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
+
 import streamlit as st
 
 if TYPE_CHECKING:
-    from app.utils.visualization import VisualizationConfig, KernelOverlayConfig
+    from app.utils.visualization import KernelOverlayConfig, VisualizationConfig
 
 
 @dataclass

@@ -802,74 +802,71 @@ class ProcessingControl(Component):
         """Render enhanced weight distribution analysis."""
         col1, col2 = st.columns([2, 1])
 
-        with col1:
-            with figure_context() as fig:
-                gs = fig.add_gridspec(2, 1, height_ratios=[3, 1])
+        with col1, figure_context() as fig:
+            gs = fig.add_gridspec(2, 1, height_ratios=[3, 1])
 
-                # Plot histogram in top subplot with better styling
-                ax1 = fig.add_subplot(gs[0])
-                non_zero_weights = similarity_map[similarity_map > 0]
+            # Plot histogram in top subplot with better styling
+            ax1 = fig.add_subplot(gs[0])
+            non_zero_weights = similarity_map[similarity_map > 0]
 
-                # Use better binning strategy
-                n_bins = min(50, len(np.unique(non_zero_weights)))
-                weights, bins, patches = ax1.hist(
-                    non_zero_weights,
-                    bins=n_bins,
-                    density=True,
-                    alpha=0.7,
-                    color="skyblue",
-                    label=f"n={len(non_zero_weights)}",
-                )
+            # Use better binning strategy
+            n_bins = min(50, len(np.unique(non_zero_weights)))
+            weights, bins, patches = ax1.hist(
+                non_zero_weights,
+                bins=n_bins,
+                density=True,
+                alpha=0.7,
+                color="skyblue",
+                label=f"n={len(non_zero_weights)}",
+            )
 
-                # Add kernel density estimate
-                from scipy import stats
+            # Add kernel density estimate
+            from scipy import stats
 
-                if len(non_zero_weights) > 1:
-                    kde = stats.gaussian_kde(non_zero_weights)
-                    x_range = np.linspace(bins[0], bins[-1], 200)
-                    ax1.plot(
-                        x_range, kde(x_range), "r-", lw=2, label="Density Estimate"
-                    )
+            if len(non_zero_weights) > 1:
+                kde = stats.gaussian_kde(non_zero_weights)
+                x_range = np.linspace(bins[0], bins[-1], 200)
+                ax1.plot(x_range, kde(x_range), "r-", lw=2, label="Density Estimate")
 
-                # Add statistical markers
-                ax1.axvline(
-                    stats["mean"],
-                    color="red",
-                    linestyle="--",
-                    label=f'Mean={stats["mean"]:.3f}',
-                )
-                ax1.axvline(
-                    stats["median"],
-                    color="green",
-                    linestyle=":",
-                    label=f'Median={stats["median"]:.3f}',
-                )
+            # Add statistical markers
+            ax1.axvline(
+                stats["mean"],
+                color="red",
+                linestyle="--",
+                label=f'Mean={stats["mean"]:.3f}',
+            )
+            ax1.axvline(
+                stats["median"],
+                color="green",
+                linestyle=":",
+                label=f'Median={stats["median"]:.3f}',
+            )
 
-                # Add IQR shading
-                ax1.axvspan(
-                    stats["q1"],
-                    stats["q3"],
-                    alpha=0.2,
-                    color="gray",
-                    label=f'IQR={stats["iqr"]:.3f}',
-                )
+            # Add IQR shading
+            ax1.axvspan(
+                stats["q1"],
+                stats["q3"],
+                alpha=0.2,
+                color="gray",
+                label=f'IQR={stats["iqr"]:.3f}',
+            )
 
-                ax1.set_title("Weight Distribution")
-                ax1.set_xlabel("Weight Value")
-                ax1.set_ylabel("Density")
-                ax1.legend()
+            ax1.set_title("Weight Distribution")
+            ax1.set_xlabel("Weight Value")
+            ax1.set_ylabel("Density")
+            ax1.legend()
 
-                # Plot cumulative distribution in bottom subplot
-                ax2 = fig.add_subplot(gs[1])
-                sorted_weights = np.sort(non_zero_weights)
-                cumulative = np.arange(1, len(sorted_weights) + 1) / len(sorted_weights)
-                ax2.plot(sorted_weights, cumulative, "b-", label="Cumulative")
-                ax2.set_xlabel("Weight Value")
-                ax2.set_ylabel("Cumulative")
-                ax2.grid(True, alpha=0.3)
+            # Plot cumulative distribution in bottom subplot
+            ax2 = fig.add_subplot(gs[1])
+            sorted_weights = np.sort(non_zero_weights)
+            cumulative = np.arange(1, len(sorted_weights) + 1) / len(sorted_weights)
+            ax2.plot(sorted_weights, cumulative, "b-", label="Cumulative")
+            ax2.set_xlabel("Weight Value")
+            ax2.set_ylabel("Cumulative")
+            ax2.grid(True, alpha=0.3)
 
-                plt.tight_layout()
-                st.pyplot(fig)
+            plt.tight_layout()
+            st.pyplot(fig)
 
         with col2:
             st.markdown(

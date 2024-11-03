@@ -28,8 +28,3 @@ class LSCIAnalysis(FilterAnalysis):
             "vertical_contrast": float(np.std(col_means) / np.mean(col_means)),
             "directional_ratio": float(np.std(row_means) / np.std(col_means)),
         }
-
-    def render_analysis(self, img_array: np.ndarray, x: int, y: int) -> None:
-        """Render LSCI analysis."""
-        # TODO: Implement LSCI-specific analysis visualization
-        pass

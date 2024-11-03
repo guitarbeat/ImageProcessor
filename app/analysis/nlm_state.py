@@ -1,7 +1,8 @@
 """State management for NLM analysis."""
 
 from dataclasses import dataclass
-from typing import Optional, Dict, Tuple
+from typing import Dict, Optional, Tuple
+
 import streamlit as st
 
 

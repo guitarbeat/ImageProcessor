@@ -197,20 +197,19 @@ class NLMAnalysis:
         """Render weight distribution analysis."""
         col1, col2 = st.columns([2, 1])
 
-        with col1:
-            with figure_context() as fig:
-                gs = fig.add_gridspec(2, 1, height_ratios=[3, 1])
+        with col1, figure_context() as fig:
+            gs = fig.add_gridspec(2, 1, height_ratios=[3, 1])
 
-                # Plot histogram in top subplot
-                ax1 = fig.add_subplot(gs[0])
-                self._plot_weight_histogram(ax1, similarity_map)
+            # Plot histogram in top subplot
+            ax1 = fig.add_subplot(gs[0])
+            self._plot_weight_histogram(ax1, similarity_map)
 
-                # Plot cumulative distribution in bottom subplot
-                ax2 = fig.add_subplot(gs[1])
-                self._plot_cumulative_distribution(ax2, similarity_map)
+            # Plot cumulative distribution in bottom subplot
+            ax2 = fig.add_subplot(gs[1])
+            self._plot_cumulative_distribution(ax2, similarity_map)
 
-                plt.tight_layout()
-                st.pyplot(fig)
+            plt.tight_layout()
+            st.pyplot(fig)
 
         with col2:
             st.markdown(
